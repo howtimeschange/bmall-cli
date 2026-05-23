@@ -50,7 +50,21 @@ describe("agent deterministic helpers", () => {
       schemaVersion: 1,
       distribution: "bundled",
       sourceReposRequired: false,
+      sourceKnowledge: {
+        id: "bmall-source-knowledge",
+        generatedAt: "2026-05-24",
+        totalEndpointOccurrences: 7401,
+        uniqueNormalizedPaths: 4635,
+      },
     });
+    expect(summary.sourceKnowledge?.artifactRefs).toEqual(
+      expect.arrayContaining([
+        "docs/source-knowledge/full-endpoint-catalog.md",
+        "docs/source-knowledge/endpoint-coverage.md",
+        "docs/source-knowledge/source-knowledge.csv",
+        "docs/source-knowledge/normalized-endpoints.csv",
+      ]),
+    );
     expect(summary.entries).toEqual(
       expect.arrayContaining([
         expect.objectContaining({

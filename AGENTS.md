@@ -18,6 +18,7 @@ Bmall CLI 是 Semir Reabam/Bmall 订货系统的 API-first 命令行客户端。
 - `docs/`：Agent 使用、运维 runbook、安全、命令参考和源码导航。
 - `CODEMAP.md`：本仓代码地图。
 - `docs/source-code-navigation.md`：从 CLI 跳到 Bmall 后端/前端源码的排查指南。
+- `docs/source-knowledge/`：项目内源码接口知识包，包含四个订货商城源码仓的接口抽取、领域链路和后续 `source-explorer` 规划。
 
 ## 同级源码仓
 
@@ -26,6 +27,11 @@ Bmall CLI 是 Semir Reabam/Bmall 订货系统的 API-first 命令行客户端。
 - `../semir-reabam-admin/`：Vue 2 旧后台；旧后台审核、配置和排障页面可查这里。
 - `../semir-bmall-admin-v2/`：React/ICE 后台 v2；新后台页面、service 层和 iframe 集成可查这里。
 - `../AGENTS.md`、`../CODEMAP.md`：工作区级导航，解释多仓边界。
+- `docs/source-knowledge/bmall-code-knowledge.json`：机器可读接口候选全集；查接口路径、领域归类、仓库来源和文件行号时优先用它。
+- `docs/source-knowledge/full-endpoint-catalog.md`：全量 Markdown 接口目录；需要穷尽看某个 domain 的所有接口时用它。
+- `docs/source-knowledge/endpoint-coverage.md`：前后端覆盖报告；用于判断接口是后端+前端均有证据、仅后端，还是仅前端。
+- `docs/source-knowledge/source-knowledge.csv`、`docs/source-knowledge/normalized-endpoints.csv`：表格和脚本友好的全量清单，适合做透视分析或未来 CLI 查询索引。
+- `docs/source-knowledge/interface-map.md`、`docs/source-knowledge/domain-flows.md`：人读版接口地图和柔供/中短期/提货单/客户+SKC 业务链路。
 
 ## 命令
 
@@ -51,17 +57,19 @@ Bmall CLI 是 Semir Reabam/Bmall 订货系统的 API-first 命令行客户端。
 ## 排查原则
 
 - 先用 CLI 确认 profile、品牌、门店、订单号、待审核单 id、API 返回和 request id。
-- 再到同级源码仓查 controller、service、DTO、mapper、前端 service 或页面调用。
+- 再查 `docs/source-knowledge/`，快速定位已有接口、字段、枚举和页面入口；需要更深证据时再到同级源码仓查 controller、service、DTO、mapper、前端 service 或页面调用。
 - 结论要区分三层证据：CLI 现场数据、后端/前端源码逻辑、推断或待验证项。
 - Puma 订单审核这类问题不要只看“账户有钱”。例如 `[401700000] 收货地址不完整，请先维护区` 要沿着地址完整性校验查 `provinceName`、`cityName`、`regionName` 和详细地址。
+- 现在有源码时，优先用 source knowledge 和源码检索；`bmall-explorer` 适合作为运行时页面行为补证，不作为接口能力的第一入口。
 
 ## 验证
 
 - 命令注册或 manifest 改动：运行 `pnpm test -- tests/unit/manifest-contract.test.ts`，再按需运行 `pnpm docs`。
 - HTTP、auth、输出 envelope 改动：运行相关 `tests/unit/*`，高风险时运行 `pnpm test`。
 - 写操作、安全门禁、job 改动：运行 `tests/unit/write-safety.test.ts`、`tests/unit/job.test.ts` 和相关 domain 测试。
+- source knowledge 文档或抽取脚本改动：从本仓根目录运行 `node docs/source-knowledge/scripts/extract-source-knowledge.mjs`，再抽样用 `jq` 查关键接口。
 - docs-only 改动：至少复查新增文档和 `git diff -- <paths>`。
 
 ## 维护
 
-保持根指南短而可执行。跨仓业务排查细节放到 `docs/source-code-navigation.md`；目录或命令有明显变化时同步更新 `CODEMAP.md`。
+保持根指南短而可执行。跨仓业务排查细节放到 `docs/source-code-navigation.md` 和 `docs/source-knowledge/`；目录或命令有明显变化时同步更新 `CODEMAP.md`。

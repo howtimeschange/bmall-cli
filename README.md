@@ -160,6 +160,27 @@ Agent 建议流程：
 4. 遇到错误码先调 `agent explain-error`，再调用对应 `ops` 诊断命令。
 5. 不要把 token、cookie、authorization header 放进 prompt 或日志。
 
+### 源码知识包
+
+`docs/source-knowledge/` 是这次沉淀的订货商城源码接口知识包，覆盖后端、小程序、旧后台和后台 v2 四个源码仓。它把接口候选、前后端覆盖、业务链路和证据文件行号放回 `bmall-cli` 项目内，方便后续做 `source-explorer` 或报表命令时复用。
+
+| 入口 | 用途 |
+| --- | --- |
+| `docs/source-knowledge/index.md` | 知识包总览、覆盖仓库、统计和使用建议。 |
+| `docs/source-knowledge/interface-map.md` | 柔供、中短期、提货单、订单、商品、报表等关键接口地图。 |
+| `docs/source-knowledge/domain-flows.md` | 柔供/中短期/提货单/客户+SKC 视角的链路和口径。 |
+| `docs/source-knowledge/bmall-code-knowledge.json` | 机器可读接口候选全集，含仓库、路径、domain、证据文件行号。 |
+| `docs/source-knowledge/source-knowledge.csv`、`docs/source-knowledge/normalized-endpoints.csv` | 全量接口出现清单和归一化接口清单，适合表格分析。 |
+| `docs/source-knowledge/full-endpoint-catalog.md`、`docs/source-knowledge/endpoint-coverage.md` | 全量接口目录和前后端覆盖报告。 |
+
+当前静态抽取结果包含 7,401 处接口出现、4,635 条归一化接口路径。复跑方式：
+
+```bash
+node docs/source-knowledge/scripts/extract-source-knowledge.mjs
+```
+
+`bmall agent knowledge --json` 也会返回 `sourceKnowledge` 快照元数据。注意：源码知识包是静态抽取结果，不等于线上接口一定可访问；涉及真实数据时仍要用 CLI 或运行时接口验证。
+
 ## 授权规则
 
 凡是会改变 Bmall 业务状态的操作，都必须先获得用户明确授权，CLI 和 Agent 不能擅自执行。包括但不限于：
@@ -211,6 +232,7 @@ Agent 建议流程：
 | 配置与日志缺口 | 明确标识仍需要后端安全 facade 的配置/日志能力。 | `ops config get`、`ops log api` | 返回 `*_REQUIRES_BACKEND_FACADE`，不伪装成功。 |
 | Agent 能力发现 | 暴露命令契约、参数、访问级别、输出列和执行策略。 | `manifest list`、`manifest get` | manifest 与 Commander 命令有测试约束。 |
 | Agent 诊断知识 | 查看内置诊断知识包，按错误码返回根因、排查命令和修复路径。 | `agent knowledge`、`agent explain-error` | 诊断知识随 CLI 发布；未知错误给通用升级路径。 |
+| 源码接口知识包 | 从四个源码仓抽取接口、字段入口、覆盖关系和业务链路，作为未来 `source-explorer` 和报表命令的索引。 | `docs/source-knowledge/`、`agent knowledge` | 静态源码证据只做导航；线上可用性和数据结果仍需运行时验证。 |
 
 ## 支持的订单类型
 
@@ -321,6 +343,7 @@ bmall ops address patch --company-id <COMPANY_ID> --address-id <ADDRESS_ID> --re
 │   └── domains/            # 业务命令域
 ├── manifests/              # Agent 命令契约和 job allowlist
 ├── docs/                   # 安全、Agent 使用、运维 runbook、命令参考
+│   └── source-knowledge/   # 四个订货商城源码仓的接口知识包
 ├── tests/                  # Vitest 单测和 contract 测试
 └── scripts/                # 文档生成脚本
 ```
@@ -360,3 +383,4 @@ node dist/cli.js order submit --file order.json --dry-run --json
 | `docs/operations-runbook.md` | 运维排障 runbook |
 | `docs/security.md` | 安全和脱敏规则 |
 | `docs/source-code-navigation.md` | 从 CLI 跳到 Bmall 后端/前端源码的排查路线 |
+| `docs/source-knowledge/index.md` | 源码接口知识包入口和复跑方式 |

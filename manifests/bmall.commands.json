@@ -260,7 +260,8 @@
         "id",
         "version",
         "entries",
-        "sourceReposRequired"
+        "sourceReposRequired",
+        "sourceKnowledge"
       ],
       "name": "agent.knowledge",
       "description": "Show bundled diagnostic knowledge pack metadata for external users",

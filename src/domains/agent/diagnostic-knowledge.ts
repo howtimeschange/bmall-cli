@@ -8,6 +8,14 @@ export interface DiagnosticKnowledgePack {
   distribution: "bundled";
   sourceReposRequired: boolean;
   sourceSummary: string;
+  sourceKnowledge?: {
+    id: string;
+    generatedAt: string;
+    totalEndpointOccurrences: number;
+    uniqueNormalizedPaths: number;
+    artifactRefs: string[];
+    coverageCategories: string[];
+  };
 }
 
 export interface DiagnosticPlaybook {
@@ -68,12 +76,29 @@ export interface UnknownDiagnosticExplanation {
 export const diagnosticKnowledgePack: DiagnosticKnowledgePack = {
   id: "bmall-cli-diagnostics",
   schemaVersion: 1,
-  version: "2026.05.24.2",
+  version: "2026.05.24.3",
   lastReviewed: "2026-05-24",
   distribution: "bundled",
   sourceReposRequired: false,
   sourceSummary:
-    "Bundled rules are distilled from internal Bmall CLI/API review and source-code investigation, then shipped with the CLI for external users.",
+    "Bundled rules are distilled from internal Bmall CLI/API review and the complete Bmall source knowledge package, then shipped with the CLI for external users.",
+  sourceKnowledge: {
+    id: "bmall-source-knowledge",
+    generatedAt: "2026-05-24",
+    totalEndpointOccurrences: 7401,
+    uniqueNormalizedPaths: 4635,
+    artifactRefs: [
+      "docs/source-knowledge/index.md",
+      "docs/source-knowledge/bmall-code-knowledge.json",
+      "docs/source-knowledge/source-knowledge.csv",
+      "docs/source-knowledge/normalized-endpoints.csv",
+      "docs/source-knowledge/full-endpoint-catalog.md",
+      "docs/source-knowledge/endpoint-coverage.md",
+      "docs/source-knowledge/domain-flows.md",
+      "docs/source-knowledge/interface-map.md",
+    ],
+    coverageCategories: ["backend-and-frontend", "backend-only", "frontend-only", "frontend-shared-only"],
+  },
 };
 
 export const diagnosticEntries: DiagnosticEntry[] = [

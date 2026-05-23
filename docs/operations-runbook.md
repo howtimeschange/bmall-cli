@@ -9,7 +9,7 @@ bmall agent knowledge --json
 bmall agent explain-error --error-code 401700000 --json
 ```
 
-运维支持收到用户反馈时，先记录知识包 `version`、出错命令 `requestId`、错误码、错误原文、脱敏后的 `profile/env/groupId/companyId/orderId` 或 `orderNo`。不要要求外部用户提供源码路径，也不要让用户发送 token、cookie、authorization header、完整手机号或身份证号。
+运维支持收到用户反馈时，先记录知识包 `version`、`sourceKnowledge.generatedAt`、出错命令 `requestId`、错误码、错误原文、脱敏后的 `profile/env/groupId/companyId/orderId` 或 `orderNo`。不要要求外部用户提供源码路径，也不要让用户发送 token、cookie、authorization header、完整手机号或身份证号。
 
 ## 订单诊断
 

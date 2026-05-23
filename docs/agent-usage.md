@@ -10,7 +10,7 @@ Released CLI bundles are designed for external users who do not have local acces
 bmall agent knowledge --json
 ```
 
-This command exposes the knowledge pack id, schema version, bundled version, and the currently included error summaries. `sourceReposRequired: false` means the published CLI package carries enough packaged knowledge for first-line diagnosis without local source code.
+This command exposes the knowledge pack id, schema version, bundled version, source-knowledge snapshot metadata, and the currently included error summaries. `sourceReposRequired: false` means the published CLI package carries enough packaged knowledge for first-line diagnosis without local source code.
 
 ## 品牌和门店上下文
 
