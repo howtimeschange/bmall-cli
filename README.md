@@ -1,24 +1,24 @@
 # Bmall CLI
 
-API-first command line client for Semir Reabam/Bmall ordering operations.
+Bmall CLI 是面向 Semir Reabam/Bmall 订货系统的 API-first 命令行客户端。
 
-The CLI gives two audiences a stable interface:
+它给两类用户提供稳定接口：
 
-- Customers and AI agents can search products, inspect SKUs, check cart/order state, build deterministic order drafts, validate rule chains, and dry-run or submit supported order flows.
-- Operations users can diagnose orders, inspect product master/application state, check stock/customer/IAM context, normalize export tasks, and run only allowlisted jobs.
+- 普通客户和 AI Agent：搜索商品、查看 SKU、检查购物车和订单状态、生成确定性的订单草稿、校验规则链，并对支持的订单流程执行 dry-run 或受控提交。
+- 系统运维：诊断订单、检查商品主数据和商品应用、排查库存/客户/IAM 上下文、归一化导出任务，并且只运行 allowlist 中明确允许的 job。
 
-Business commands do not use browser automation, DOM reading, screenshots, CDP, or request interception. Browser use is limited to interactive login bootstrap.
+业务命令不使用浏览器自动化、DOM 读取、截图、CDP 或网络拦截。浏览器只用于交互式登录引导。
 
-## Status
+## 当前状态
 
-- Runtime: Node.js 20+
-- Package manager: pnpm 9.15.0
-- Language: TypeScript
-- Command manifest: 85 entries in `manifests/bmall.commands.json`
-- Default production API base: `https://bmall-api.semirapp.com/api`
-- Default production login page: `https://bmall.semirapp.com/`
+- 运行时：Node.js 20+
+- 包管理器：pnpm 9.15.0
+- 语言：TypeScript
+- 命令 manifest：`manifests/bmall.commands.json` 中 85 条命令
+- 生产 API 默认地址：`https://bmall-api.semirapp.com/api`
+- 生产网页登录默认地址：`https://bmall.semirapp.com/`
 
-## Install
+## 安装
 
 ```bash
 pnpm install
@@ -27,39 +27,39 @@ pnpm link --global
 bmall version --json
 ```
 
-For local development without linking:
+如果不想全局 link，也可以在本地直接运行：
 
 ```bash
 node dist/cli.js version --json
 ```
 
-## Authentication
+## 登录认证
 
-Recommended browser-assisted login:
+推荐使用浏览器辅助登录：
 
 ```bash
 bmall auth login --browser --env prod --profile semir-prod --json
 ```
 
-The command opens the Bmall web login page and prints a loopback callback plus a console/bookmarklet snippet. The snippet reads only whitelisted localStorage fields and sends a token bundle to the local receiver.
+这个命令会打开 Bmall 网页登录页，并打印本地 loopback 回调地址和控制台/bookmarklet 片段。片段只读取白名单内的 localStorage 字段，并把 token bundle 发送给本地 receiver。
 
-Import an existing token bundle:
+也可以导入已有 token bundle：
 
 ```bash
 bmall auth import-token --env prod --profile semir-prod --from-file ./token-bundle.json --json
 bmall whoami --profile semir-prod --env prod --json
 ```
 
-One-command environment overrides are also supported:
+支持单次命令环境变量覆盖：
 
 ```bash
 BMALL_TOKEN=... bmall whoami --json
 BMALL_TOKEN_BUNDLE='{"tokenId":"..."}' bmall whoami --json
 ```
 
-Do not commit token files. The repo `.gitignore` excludes local credential and audit paths.
+不要提交 token 文件。仓库 `.gitignore` 已排除本地凭证和审计路径。
 
-## Common Customer Flow
+## 客户侧常用流程
 
 ```bash
 bmall product search --keyword "卫衣" --limit 20 --json
@@ -71,23 +71,23 @@ bmall order validate --file order.json --json
 bmall order submit --file order.json --dry-run --json
 ```
 
-Financial writes are gated. A real submit requires `--confirm`; unsupported/offline submit paths return blocked or unsupported instead of pretending success.
+订单提交属于财务写操作，默认受保护。真实提交需要 `--confirm`；未接入真实 API 或不支持的提交路径会返回 blocked/unsupported，不会伪装成成功。
 
-## Supported Order Surfaces
+## 支持的订单类型
 
-The CLI models order flows with separate adapters:
+CLI 使用独立 adapter 建模不同订单链路：
 
-- `replenishment`: normal replenishment order
-- `multi-store-replenishment`: multi-store replenishment
-- `mid-presale`: middle/short-term presale order
-- `supply-presale`: flexible supply presale order
-- `pickup`: presale pickup order
-- `new-store`: new-store pickup/order flow
-- `pending-review`: pending review order
-- `one-piece-pending`: one-piece drop-shipping pending review
-- `live-presale`, `direct-package`, `intellect-ai-replenishment`, `sales-repurchase`: discoverable extension surfaces, not default submit paths
+- `replenishment`：普通补货订单
+- `multi-store-replenishment`：多门店补货订单
+- `mid-presale`：中短期订单
+- `supply-presale`：柔供预售订单
+- `pickup`：预售提货单
+- `new-store`：新店订单/新店提货链路
+- `pending-review`：待审核订单
+- `one-piece-pending`：一件代发待审核补货
+- `live-presale`、`direct-package`、`intellect-ai-replenishment`、`sales-repurchase`：可发现的扩展订单类型，不作为默认提交入口
 
-Examples:
+示例：
 
 ```bash
 bmall mid-order activity --activity-id A001 --json
@@ -98,13 +98,13 @@ bmall new-store-order confirm-plan --new-store-order-id NS001 --batch-no B001 --
 bmall new-store-order submit --file new-store-pickup.json --dry-run --json
 ```
 
-The new-store dry-run submit sequence is explicit:
+新店订单 dry-run 提交会明确输出完整链路：
 
 ```text
 checkPickupGoods -> orderConfirm -> orderPreCheck -> pick/b2bOrder/add
 ```
 
-## Operations Flow
+## 运维常用流程
 
 ```bash
 bmall ops order diagnose --order-no DH202605230001 --json
@@ -116,27 +116,27 @@ bmall ops export task wait --task-id 10001 --timeout 10m --json
 bmall ops job list --module order --json
 ```
 
-Write operations require either dry-run or explicit confirmation:
+写操作必须先 dry-run 或显式确认：
 
 ```bash
 bmall ops product apply update --input apply-items.csv --dry-run --json
-bmall ops product apply update --input apply-items.csv --confirm --reason "approved product application change" --json
+bmall ops product apply update --input apply-items.csv --confirm --reason "已审批商品应用调整" --json
 ```
 
-Generic `schedule/dowork` is intentionally forbidden. Job execution is restricted to `manifests/job-allowlist.json`.
+通用 `schedule/dowork` 被明确禁止。Job 执行只允许读取 `manifests/job-allowlist.json` 中的 allowlist。
 
-## Command Discovery
+## 命令发现
 
-Use the manifest for AI-agent planning:
+AI Agent 可以通过 manifest 做命令规划：
 
 ```bash
 bmall manifest list --json
 bmall manifest get order.submit --json
 ```
 
-Every manifest entry declares audience, access level, strategy, arguments, columns, and `browser: false`.
+每条 manifest 都声明 audience、access level、strategy、参数、输出列，并且业务命令均为 `browser: false`。
 
-## Development
+## 开发
 
 ```bash
 pnpm install
@@ -145,7 +145,7 @@ pnpm test
 pnpm docs
 ```
 
-Useful smoke checks:
+常用 smoke check：
 
 ```bash
 node dist/cli.js version --json
@@ -154,16 +154,16 @@ node dist/cli.js order-type list --json
 node dist/cli.js order submit --file order.json --dry-run --json
 ```
 
-Security and operations docs live in:
+相关文档：
 
 - `docs/security.md`
 - `docs/agent-usage.md`
 - `docs/operations-runbook.md`
 - `docs/command-reference.md`
 
-## Safety Notes
+## 安全说明
 
-- Tokens, passwords, cookies, full phone numbers, ID numbers, and authorization headers must not be logged.
-- Local audit records are JSONL files under `~/.bmall-cli/audit/YYYY-MM-DD.jsonl`.
-- Browser automation is not a business execution path.
-- Read-only production smoke tests are safe; real order/config/job writes require approval gates and should be tested in non-production first.
+- 不记录 token、password、cookie、完整手机号、身份证号或 authorization header。
+- 本地审计记录写入 `~/.bmall-cli/audit/YYYY-MM-DD.jsonl`。
+- 浏览器自动化不是业务命令的执行路径。
+- 生产只读 smoke test 是安全的；真实订单、配置、job 写操作必须经过确认门禁，并优先在非生产环境验证。
