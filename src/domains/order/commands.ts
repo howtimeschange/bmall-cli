@@ -35,37 +35,29 @@ export function registerOrderCommands(program: Command, getGlobalsOrOutput?: (()
   const getGlobals: (() => GlobalOptions) | undefined = typeof outputOrDeps === 'function' ? getGlobalsOrOutput as () => GlobalOptions : undefined;
   const output: OutputFn = typeof outputOrDeps === 'function' ? outputOrDeps : (getGlobalsOrOutput as OutputFn | undefined) ?? defaultOutput;
   const commandDeps: OrderCommandDeps = typeof outputOrDeps === 'function' ? deps : (outputOrDeps as OrderCommandDeps | undefined) ?? {};
-  program
-    .command('order-type')
-    .description('Manage order type manifest')
-    .argument('<action>', 'list|get')
-    .option('--type <type>')
-    .option('--json')
-    .action((action, opts) => {
-      if (action === 'list') return output(listOrderTypes());
-      if (action === 'get') return output(listOrderTypes().find((entry) => entry.type === opts.type));
-      throw new Error(`Unsupported order-type action: ${action}`);
-    });
+  const orderType = program.command('order-type').description('Manage order type manifest');
+  orderType.command('list').option('--json').action(() => output(listOrderTypes()));
+  orderType.command('get').requiredOption('--type <type>').option('--json').action((opts) => {
+    output(listOrderTypes().find((entry) => entry.type === opts.type));
+  });
 
   program
     .command('order-flow')
     .description('Inspect order flow adapter')
-    .argument('<action>', 'inspect')
+    .command('inspect')
     .requiredOption('--type <type>')
     .option('--json')
-    .action((action, opts) => {
-      if (action !== 'inspect') throw new Error(`Unsupported order-flow action: ${action}`);
+    .action((opts) => {
       output(inspectOrderFlow(BmallOrderTypeSchema.parse(opts.type)));
     });
 
   program
     .command('order-rule')
     .description('Explain rule chain skeleton')
-    .argument('<action>', 'explain')
+    .command('explain')
     .requiredOption('--type <type>')
     .option('--json')
-    .action((action, opts) => {
-      if (action !== 'explain') throw new Error(`Unsupported order-rule action: ${action}`);
+    .action((opts) => {
       const type = BmallOrderTypeSchema.parse(opts.type);
       output({ orderType: type, ruleChain: buildRuleChainSkeleton() });
     });

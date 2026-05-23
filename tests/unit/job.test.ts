@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { listJobs, selectRunnableJob, type JobAllowlistEntry } from "../../src/domains/job/commands.js";
+import { listJobs, runJob, selectRunnableJob, type JobAllowlistEntry } from "../../src/domains/job/commands.js";
 
 const jobs: JobAllowlistEntry[] = [
   {
@@ -40,5 +40,10 @@ describe("job allowlist", () => {
 
   it("selects enabled allowlisted jobs", () => {
     expect(selectRunnableJob(jobs, "safeEnabledJob").fixedParams).toEqual({ scope: "fixed" });
+  });
+
+  it("does not report non-dry-run success without a backend client", async () => {
+    const job = selectRunnableJob(jobs, "safeEnabledJob");
+    await expect(runJob(job, { confirm: true, reason: "manual maintenance" })).rejects.toThrow("JOB_RUN_REQUIRES_BACKEND_FACADE");
   });
 });

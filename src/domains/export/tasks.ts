@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
+import { request } from "undici";
 
 export type ExportMode = "direct-url" | "async-task" | "stream" | "pending";
 export type ExportStatus = "running" | "success" | "failed" | "unknown";
@@ -25,7 +26,10 @@ export interface PendingExportRecord {
 }
 
 const DIRECT_URL_KEYS = ["downloadURL", "downloadUrl", "fileUrl", "url"];
-const TASK_ID_KEYS = ["taskId", "taskCode", "recordId", "id"];
+const TASK_ID_KEYS = ["taskId", "taskCode", "recordId", "id", "fid"];
+const ASYNC_TASK_PAGE_ENDPOINT = "file/asyn/export/b2b/page";
+const EXPORT_TASK_PAGE_ENDPOINT = "file/export/task/findReportExportTaskByUser";
+const EXPORT_TASK_DOWNLOAD_ENDPOINT = "file/export/task/downloadTaskFile";
 
 function pickString(source: Record<string, unknown>, keys: string[]): string | null {
   for (const key of keys) {
@@ -109,6 +113,28 @@ export function normalizeTaskStatus(value: unknown): ExportStatus {
   return "unknown";
 }
 
+export function findTaskInList(raw: unknown, taskId: string): NormalizedExportTask {
+  const items = extractTaskItems(raw);
+  const found = items.find((item) => {
+    const obj = item && typeof item === "object" ? item as Record<string, unknown> : {};
+    return TASK_ID_KEYS.some((key) => String(obj[key] ?? "") === taskId);
+  });
+  return normalizeExportResponse(found ?? { taskId, status: "unknown", raw }, { sourceEndpoint: ASYNC_TASK_PAGE_ENDPOINT });
+}
+
+function extractTaskItems(raw: unknown): unknown[] {
+  const source = raw && typeof raw === "object" && "data" in raw && (raw as { data?: unknown }).data
+    ? (raw as { data: unknown }).data
+    : raw;
+  if (Array.isArray(source)) return source;
+  const obj = source && typeof source === "object" ? source as Record<string, unknown> : {};
+  for (const key of ["content", "items", "records", "rows", "list", "DataLine"]) {
+    if (Array.isArray(obj[key])) return obj[key] as unknown[];
+  }
+  if (obj.data && typeof obj.data === "object") return extractTaskItems(obj.data);
+  return [];
+}
+
 export async function waitForExportTask(
   getTask: (taskId: string) => Promise<NormalizedExportTask>,
   taskId: string,
@@ -142,6 +168,12 @@ export async function downloadExportTask(
   return { ok: true, output, bytes: bytes.byteLength };
 }
 
+export async function fetchUrlBytes(url: string): Promise<Uint8Array> {
+  const response = await request(url);
+  if (response.statusCode >= 400) throw new Error(`EXPORT_DOWNLOAD_HTTP_${response.statusCode}`);
+  return new Uint8Array(await response.body.arrayBuffer());
+}
+
 type ApiClient = { request: (method: string, path: string, body?: unknown) => Promise<unknown> };
 type OutputFn = (payload: unknown) => unknown;
 type CommandLike = {
@@ -168,29 +200,40 @@ function emit(output: OutputFn | undefined, payload: unknown): unknown {
   return payload;
 }
 
+function requireClient(client: ApiClient | undefined): ApiClient {
+  if (!client) throw new Error("EXPORT_TASK_REQUIRES_API_CLIENT");
+  return client;
+}
+
 export function registerExportCommands(program: CommandLike, client?: ApiClient, output?: OutputFn) {
   const task = program.command("export").description("Export operations").command("task").description("Export task operations");
 
-  task.command("list").option("--type <type>").option("--json").action(async (options) => {
-    const result = client ? await client.request("GET", "cli/export/tasks", options) : { items: [] };
-    return emit(output, result);
+  task.command("list").option("--type <type>").option("--page-index <pageIndex>").option("--page-size <pageSize>").option("--json").action(async (options) => {
+    const body = { pageIndex: Number(options.pageIndex ?? 1), pageSize: Number(options.pageSize ?? 20), type: options.type };
+    return emit(output, await requireClient(client).request("POST", ASYNC_TASK_PAGE_ENDPOINT, body));
   });
   task.command("get").requiredOption("--task-id <taskId>").option("--json").action(async (options) => {
-    const raw = client ? await client.request("GET", `cli/export/tasks/${options.taskId}`, options) : { taskId: options.taskId };
-    return emit(output, normalizeExportResponse(raw, { sourceEndpoint: "cli/export/tasks" }));
+    const raw = await requireClient(client).request("POST", ASYNC_TASK_PAGE_ENDPOINT, { taskId: options.taskId, pageIndex: 1, pageSize: 20 });
+    return emit(output, findTaskInList(raw, String(options.taskId)));
   });
   task.command("wait").requiredOption("--task-id <taskId>").option("--timeout <timeout>", "timeout such as 10m", "10m").option("--json").action(async (options) => {
-    if (!client) return emit(output, { mode: "async-task", taskId: options.taskId, status: "unknown", downloadUrl: null, sourceEndpoint: null });
     const result = await waitForExportTask(async (taskId) => {
-      const raw = await client.request("GET", `cli/export/tasks/${taskId}`, {});
-      return normalizeExportResponse(raw, { sourceEndpoint: "cli/export/tasks" });
+      const raw = await requireClient(client).request("POST", ASYNC_TASK_PAGE_ENDPOINT, { taskId, pageIndex: 1, pageSize: 20 });
+      return findTaskInList(raw, taskId);
     }, String(options.taskId), { timeoutMs: parseDurationMs(options.timeout), intervalMs: 2000 });
     return emit(output, result);
   });
   task.command("download").requiredOption("--task-id <taskId>").requiredOption("--output <output>").option("--json").action(async (options) => {
-    const raw = client ? await client.request("GET", `cli/export/tasks/${options.taskId}`, options) : { taskId: options.taskId };
-    return emit(output, normalizeExportResponse(raw, { sourceEndpoint: "cli/export/tasks" }));
+    const raw = await requireClient(client).request("POST", EXPORT_TASK_DOWNLOAD_ENDPOINT, { taskId: options.taskId });
+    const normalized = normalizeExportResponse(raw, { sourceEndpoint: EXPORT_TASK_DOWNLOAD_ENDPOINT });
+    return emit(output, await downloadExportTask(normalized, String(options.output), fetchUrlBytes));
   });
 
   return task;
 }
+
+export const exportTaskEndpoints = {
+  asyncPage: ASYNC_TASK_PAGE_ENDPOINT,
+  reportPage: EXPORT_TASK_PAGE_ENDPOINT,
+  download: EXPORT_TASK_DOWNLOAD_ENDPOINT,
+};

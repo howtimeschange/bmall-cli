@@ -98,6 +98,45 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
+      "args": [],
+      "columns": [
+        "name",
+        "audience",
+        "access",
+        "browser"
+      ],
+      "name": "manifest.list",
+      "description": "List command manifest entries",
+      "audience": "core",
+      "access": "read",
+      "strategy": "none"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "name",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "name",
+        "args",
+        "columns"
+      ],
+      "name": "manifest.get",
+      "description": "Get one command manifest entry",
+      "audience": "core",
+      "access": "read",
+      "strategy": "none"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
       "args": [
         {
           "name": "token",
@@ -136,6 +175,14 @@
         {
           "name": "no-open",
           "type": "bool"
+        },
+        {
+          "name": "account",
+          "type": "str"
+        },
+        {
+          "name": "password",
+          "type": "str"
         }
       ],
       "columns": [
@@ -143,8 +190,8 @@
         "env",
         "callbackUrl"
       ],
-      "name": "auth.login.browser",
-      "description": "Start a local loopback receiver for browser-assisted login",
+      "name": "auth.login",
+      "description": "Login with browser-assisted loopback or account/password form",
       "audience": "core",
       "access": "read",
       "strategy": "api-login",
@@ -200,13 +247,23 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "error-code",
+          "type": "str"
+        },
+        {
+          "name": "message",
+          "type": "str"
+        }
+      ],
       "columns": [
-        "unsupported",
-        "message"
+        "code",
+        "rootCause",
+        "commands"
       ],
       "name": "agent.explain-error",
-      "description": "Not implemented in this CLI slice; use docs/agent-usage.md for local troubleshooting guidance",
+      "description": "Explain known Bmall error codes and map them to CLI remediation commands",
       "audience": "core",
       "access": "read",
       "strategy": "none"
@@ -230,14 +287,23 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "sword",
+          "type": "str",
+          "required": false
+        }
+      ],
       "columns": [
+        "accountType",
         "companyId",
         "companyName",
-        "groupId"
+        "companyCode",
+        "groupId",
+        "scId"
       ],
       "name": "company.list",
-      "description": "List companies available to the current token",
+      "description": "List companies available to the current token and active brand",
       "audience": "customer",
       "access": "read",
       "strategy": "api-token"
@@ -259,6 +325,86 @@
       ],
       "name": "company.use",
       "description": "Set active company context in the profile",
+      "audience": "customer",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "sword",
+          "type": "str",
+          "required": false
+        }
+      ],
+      "columns": [
+        "accountType",
+        "sgId",
+        "groupId",
+        "groupName",
+        "groupCode"
+      ],
+      "name": "company.groups",
+      "description": "List brand groups available to the current BMALL or IAM account",
+      "audience": "customer",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "sg-id",
+          "type": "str",
+          "required": false
+        },
+        {
+          "name": "group-id",
+          "type": "str",
+          "required": false
+        }
+      ],
+      "columns": [
+        "accountType",
+        "switched",
+        "group",
+        "bundle"
+      ],
+      "name": "company.switch-group",
+      "description": "Switch active brand group and save the returned token bundle; BMALL supports sgId or groupId, IAM uses groupId",
+      "audience": "customer",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "sc-id",
+          "type": "str",
+          "required": false
+        },
+        {
+          "name": "company-id",
+          "type": "str",
+          "required": false
+        }
+      ],
+      "columns": [
+        "accountType",
+        "switched",
+        "company",
+        "bundle"
+      ],
+      "name": "company.switch",
+      "description": "Switch active login company/store and save the returned token bundle; BMALL supports scId or companyId, IAM uses companyId",
       "audience": "customer",
       "access": "write",
       "strategy": "api-token"
@@ -523,6 +669,29 @@
       ],
       "name": "order-type.list",
       "description": "List supported Bmall order types",
+      "audience": "customer",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "type",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "type",
+        "displayName",
+        "canSubmit",
+        "browser"
+      ],
+      "name": "order-type.get",
+      "description": "Get one supported Bmall order type by enum value",
       "audience": "customer",
       "access": "read",
       "strategy": "api-token"
@@ -931,6 +1100,30 @@
       "name": "multi-store-order.diagnose",
       "description": "Diagnose multi-store-order order",
       "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "file",
+          "type": "path",
+          "required": true
+        }
+      ],
+      "columns": [
+        "orderType",
+        "status",
+        "blockingIssues",
+        "warnings",
+        "nextActions"
+      ],
+      "name": "pending-order.plan",
+      "description": "Build a deterministic pending-review draft plan without executing approval",
+      "audience": "customer",
       "access": "read",
       "strategy": "api-token"
     },
@@ -1793,14 +1986,320 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "order-id",
+          "type": "str",
+          "required": true
+        }
+      ],
       "columns": [
-        "supported",
-        "message"
+        "orderSourceType"
       ],
       "name": "pending-order.source-type",
-      "description": "Local skeleton only; backend source-type API mapping is not implemented",
+      "description": "Check whether a pending order should use pending or normal order detail flow",
       "audience": "customer",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "order-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "middle-ground",
+          "type": "bool"
+        }
+      ],
+      "columns": [
+        "orderNo",
+        "companyId",
+        "addressInfo"
+      ],
+      "name": "pending-order.detail",
+      "description": "Read pending-review order detail from mini or middle-ground endpoint",
+      "audience": "customer",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "file",
+          "type": "path",
+          "required": true
+        }
+      ],
+      "columns": [
+        "passOrderIds",
+        "failExportReqs"
+      ],
+      "name": "pending-order.review-check",
+      "description": "Precheck pending-review approval payload",
+      "audience": "customer",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "file",
+          "type": "path",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "orderNo",
+        "status"
+      ],
+      "name": "pending-order.review",
+      "description": "Approve a pending-review order from a JSON payload with write gate",
+      "audience": "customer",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "order-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "ok"
+      ],
+      "name": "pending-order.cancel",
+      "description": "Cancel a pending-review order through the mini endpoint with destructive gate",
+      "audience": "customer",
+      "access": "destructive",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "company-id",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "fid",
+        "provinceName",
+        "cityName",
+        "regionName"
+      ],
+      "name": "ops.address.list",
+      "description": "List store receiving addresses through hr/mb2bcrd3/list",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "address-id",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "fid",
+        "provinceName",
+        "cityName",
+        "regionName"
+      ],
+      "name": "ops.address.get",
+      "description": "Read one receiving address through hr/mb2bcrd3/getById",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "company-id",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "complete",
+        "blockingIssues",
+        "nextActions"
+      ],
+      "name": "ops.address.check",
+      "description": "Check store receiving address completeness for order approval failures",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "company-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "address-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "region-name",
+          "type": "str"
+        },
+        {
+          "name": "region-code",
+          "type": "str"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.address.patch",
+      "description": "Patch a manual receiving address by preserving the full address list and calling hr/mb2bcrd3/saveOrUpdate",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "order-no",
+          "type": "str"
+        },
+        {
+          "name": "order-id",
+          "type": "str"
+        },
+        {
+          "name": "type",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "orderType",
+        "status",
+        "blockingIssues",
+        "warnings",
+        "nextActions"
+      ],
+      "name": "ops.order.diagnose",
+      "description": "Diagnose an order using existing order detail APIs and local rule extraction",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "order-id",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "orderType",
+        "status",
+        "blockingIssues",
+        "warnings",
+        "nextActions"
+      ],
+      "name": "ops.order.diagnose-pending",
+      "description": "Diagnose a pending-review order and surface address completeness failures",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "order-id",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "timeline"
+      ],
+      "name": "ops.order.timeline",
+      "description": "Read pending-review detail as a timeline anchor; full timeline facade is not present",
+      "audience": "ops",
       "access": "read",
       "strategy": "api-token"
     },
@@ -1813,6 +2312,153 @@
           "name": "order-no",
           "type": "str",
           "required": true
+        }
+      ],
+      "columns": [
+        "relation"
+      ],
+      "name": "ops.order.relations",
+      "description": "Read normal order detail by order number for relation diagnosis",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "file",
+          "type": "path"
+        }
+      ],
+      "columns": [
+        "blockingIssues"
+      ],
+      "name": "ops.order.blocking-reasons",
+      "description": "Inspect local draft blocking reasons without submitting",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "pickup-order-id",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "ok",
+        "blockingIssues"
+      ],
+      "name": "ops.order.split-check",
+      "description": "Run local split readiness checks for pickup/grouped orders without executing split",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "presale-order-id",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "ok",
+        "warnings"
+      ],
+      "name": "ops.order.sync-check",
+      "description": "Run local sync status interpretation before requesting manual SAP or async sync handling",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "order-no",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "mode",
+        "taskId",
+        "downloadUrl"
+      ],
+      "name": "ops.order.export",
+      "description": "Start order export through file/order/exportOrder and normalize async export response",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-code",
+          "type": "str"
+        },
+        {
+          "name": "keyword",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "itemCode",
+        "itemName"
+      ],
+      "name": "ops.product.master.search",
+      "description": "Search product master data through product/itemSearch/search",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-code",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "itemCode",
+        "skcCode",
+        "skuCode"
+      ],
+      "name": "ops.product.master.get",
+      "description": "Read product master detail through product/item/spec/getSpuDetailByItemId",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "input",
+          "type": "path",
+          "required": true
         },
         {
           "name": "dry-run",
@@ -1828,12 +2474,12 @@
         }
       ],
       "columns": [
-        "blocked",
-        "message"
+        "mode",
+        "apiCalls"
       ],
-      "name": "pending-order.review",
-      "description": "Local guarded skeleton only; review execution is not implemented",
-      "audience": "customer",
+      "name": "ops.product.master.import",
+      "description": "Import product master data through file/import/product/mitem/excelAdd with write gate",
+      "audience": "ops",
       "access": "write",
       "strategy": "api-token"
     },
@@ -1843,7 +2489,364 @@
       "browser": false,
       "args": [
         {
-          "name": "order-no",
+          "name": "item-code",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "itemCode",
+        "companyId"
+      ],
+      "name": "ops.product.apply.list",
+      "description": "List product application records through product/mitemcomp/list",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "input",
+          "type": "path",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.product.apply.update",
+      "description": "Update product application through product/mitemcomp/opt with write gate",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-code",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "groupId",
+        "itemCode"
+      ],
+      "name": "ops.product.group.list",
+      "description": "List product groups through product/item/group/list",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-code",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "packageId",
+        "companyId"
+      ],
+      "name": "ops.product.package.list",
+      "description": "List product package company applications through product/pag/comp/list",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-code",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "labelCode",
+        "labelName"
+      ],
+      "name": "ops.product.tag.list",
+      "description": "List product activity labels through product/activitylabel/getActivityLabelOfConditions",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-code",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "priceType",
+        "price"
+      ],
+      "name": "ops.product.price.check",
+      "description": "Check B2B price list types through product/pricelist/b2b/types",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-code",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.product.image-sync",
+      "description": "Trigger product image sync through product/itemPicAsyncByItemCode with write gate",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-code",
+          "type": "str"
+        },
+        {
+          "name": "sku-code",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "itemCode",
+        "skuCode",
+        "stockQty"
+      ],
+      "name": "ops.stock.query",
+      "description": "Query product stock statistics through product/itemStock/statistics/page",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-code",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "itemCode",
+        "sellOut"
+      ],
+      "name": "ops.stock.sync-status",
+      "description": "Query stock sell-out sync scope through product/item/page/syncStockSellOut",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "company-id",
+          "type": "str"
+        },
+        {
+          "name": "company-code",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "companyId",
+        "companyCode",
+        "companyName"
+      ],
+      "name": "ops.customer.get",
+      "description": "Read company/customer info by companyId or companyCode through hr/sysCompany query APIs",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "company-id",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "companyId",
+        "companyName"
+      ],
+      "name": "ops.store.get",
+      "description": "Read one store/company by companyId through hr/sysCompany/queryCompanyInfoById",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "distributor-id",
+          "type": "str"
+        },
+        {
+          "name": "sword",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "distributorId",
+        "companyName"
+      ],
+      "name": "ops.retailer.get",
+      "description": "Query retailer/distributor role page through hr/sysCompany/queryDistributorRole/middleGround",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "user",
+          "type": "str"
+        },
+        {
+          "name": "id",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "id",
+        "mobile",
+        "userName"
+      ],
+      "name": "ops.iam.user",
+      "description": "Query IAM users through hr/iamUser/userPage or detailById",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "role-code",
+          "type": "str"
+        },
+        {
+          "name": "id",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "id",
+        "roleCode",
+        "roleName"
+      ],
+      "name": "ops.iam.role",
+      "description": "Query IAM roles through hr/iamRole/rolePage or detailById",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "key",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "error"
+      ],
+      "name": "ops.config.get",
+      "description": "Explicitly unsupported until a safe backend configuration facade is provided",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "key",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "value",
           "type": "str",
           "required": true
         },
@@ -1864,10 +2867,205 @@
         "blocked",
         "message"
       ],
-      "name": "pending-order.cancel",
-      "description": "Local guarded skeleton only; cancel execution is not implemented",
-      "audience": "customer",
-      "access": "destructive",
+      "name": "ops.config.set",
+      "description": "Dry-run only placeholder; actual config writes require a safe backend facade",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "request-id",
+          "type": "str"
+        },
+        {
+          "name": "order-no",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "error"
+      ],
+      "name": "ops.log.api",
+      "description": "Explicitly unsupported until an API log query facade is mapped for CLI",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "order-no",
+          "type": "str"
+        },
+        {
+          "name": "item-code",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "error"
+      ],
+      "name": "ops.log.sync-warning",
+      "description": "Explicitly unsupported until a sync warning log facade is mapped for CLI",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "type",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "taskId",
+        "status",
+        "taskUrl"
+      ],
+      "name": "ops.export.task.list",
+      "description": "List async export tasks through file/asyn/export/b2b/page",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "task-id",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "taskId",
+        "status",
+        "downloadUrl"
+      ],
+      "name": "ops.export.task.get",
+      "description": "Get one async export task by polling file/asyn/export/b2b/page",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "task-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "timeout",
+          "type": "duration"
+        }
+      ],
+      "columns": [
+        "taskId",
+        "status",
+        "downloadUrl"
+      ],
+      "name": "ops.export.task.wait",
+      "description": "Poll one async export task until success, failure, or timeout",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "task-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "output",
+          "type": "path",
+          "required": true
+        }
+      ],
+      "columns": [
+        "output",
+        "bytes"
+      ],
+      "name": "ops.export.task.download",
+      "description": "Resolve export download URL through file/export/task/downloadTaskFile and write the file locally",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "module",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "jobId",
+        "module",
+        "status"
+      ],
+      "name": "ops.job.list",
+      "description": "List allowlisted operations jobs",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "job-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "jobId"
+      ],
+      "name": "ops.job.run",
+      "description": "Dry-run allowlisted jobs; actual run requires a backend facade and explicit confirmation",
+      "audience": "ops",
+      "access": "write",
       "strategy": "api-token"
     }
   ]

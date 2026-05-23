@@ -20,6 +20,7 @@ import { registerSupplyPresaleCommands } from './domains/supply-presale/commands
 import { registerExportCommands } from './domains/export/index.js';
 import { registerJobCommands } from './domains/job/index.js';
 import { registerOpsCommands } from './domains/ops/index.js';
+import { registerAgentCommands } from './domains/agent/commands.js';
 import { BmallHttpClient } from './core/http.js';
 import { SessionStore } from './auth/session.js';
 
@@ -44,20 +45,15 @@ export function registerWorkerBCommands(program: Command, getGlobals: () => Glob
   registerStockCommands(program, getGlobals, output);
   registerCartCommands(program, getGlobals, output);
   registerOrderCommands(program, getGlobals, output);
-  registerPendingOrderCommands(program, output);
+  registerPendingOrderCommands(program, output, buildApiClient(getGlobals), () => getGlobals().configHome);
   registerMidOrderCommands(program, getGlobals, output);
   registerSupplyPresaleCommands(program, getGlobals, output);
   registerPickupCommands(program, getGlobals, output);
   registerNewStoreOrderCommands(program, getGlobals, output);
 }
 
-export function registerWorkerCCommands(program: Command, getGlobals: () => GlobalOptions, output: OutputFn = jsonOutput): void {
-  const emit = async (payload: unknown): Promise<unknown> => {
-    const resolved = await payload;
-    output(resolved);
-    return resolved;
-  };
-  const apiClient = {
+function buildApiClient(getGlobals: () => GlobalOptions) {
+  return {
     request: async (method: string, path: string, body?: unknown) => {
       const globals = getGlobals();
       const resolved = await new ConfigManager(globals.configHome).resolve(globals);
@@ -74,6 +70,15 @@ export function registerWorkerCCommands(program: Command, getGlobals: () => Glob
       return success({ ...resolved, requestId: response.requestId }, response.data, { source: 'api', durationMs: response.durationMs });
     },
   };
+}
+
+export function registerWorkerCCommands(program: Command, getGlobals: () => GlobalOptions, output: OutputFn = jsonOutput): void {
+  const emit = async (payload: unknown): Promise<unknown> => {
+    const resolved = await payload;
+    output(resolved);
+    return resolved;
+  };
+  const apiClient = buildApiClient(getGlobals);
   const ops = registerOpsCommands(program, output, apiClient);
   registerExportCommands(ops, apiClient, emit);
   registerJobCommands(ops, apiClient, undefined, emit, () => getGlobals().configHome);
@@ -148,6 +153,7 @@ export function createCli(): Command {
   registerPermissionCommands(program, globals);
   registerWorkerBCommands(program, globals);
   registerWorkerCCommands(program, globals);
+  registerAgentCommands(program, jsonOutput);
   program.exitOverride();
   return program;
 }
@@ -166,5 +172,5 @@ export async function run(argv = process.argv): Promise<void> {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  await run();
+  void run();
 }

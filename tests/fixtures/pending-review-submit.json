@@ -1,0 +1,18 @@
+{
+  "orderId": "10001",
+  "orderNo": "PD202605230001",
+  "companyId": "C001",
+  "invoiceHeader": "测试开票主体",
+  "skcOutStockState": 1,
+  "orderType": 1,
+  "addressInfo": {
+    "addressId": "A1",
+    "provinceName": "湖南省",
+    "cityName": "怀化市",
+    "regionName": "洪江市",
+    "conAddress": "安江镇新德利超市四楼森马店",
+    "consignee": "丁张梅",
+    "consiPhone": "15115220772"
+  },
+  "items": []
+}

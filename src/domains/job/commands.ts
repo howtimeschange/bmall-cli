@@ -66,6 +66,15 @@ function emit(output: OutputFn | undefined, payload: unknown): unknown {
   return payload;
 }
 
+export async function runJob(selected: JobAllowlistEntry, options: { dryRun?: boolean; reason?: unknown }, client?: ApiClient) {
+  const payload = buildJobRunPayload(selected, options.reason);
+  if (options.dryRun) {
+    return { ...dryRunPlan("ops.job.run", 1, [{ method: "POST", endpoint: "ops/job/run", ...payload }]), jobId: selected.jobId };
+  }
+  if (!client) throw new Error("JOB_RUN_REQUIRES_BACKEND_FACADE");
+  return client.request("POST", "ops/job/run", payload);
+}
+
 export function registerJobCommands(program: CommandLike, client?: ApiClient, allowlistPath?: string, output?: OutputFn, configHome?: string | (() => string | undefined)) {
   const job = program.command("job").description("Allowlisted operations jobs");
   job.command("list").option("--module <module>").option("--json").action((options) => {
@@ -75,11 +84,7 @@ export function registerJobCommands(program: CommandLike, client?: ApiClient, al
     assertWriteGate(options, "write");
     const selected = selectRunnableJob(loadJobAllowlist(allowlistPath), String(options.jobId));
     const payload = buildJobRunPayload(selected, options.reason);
-    const result = options.dryRun
-      ? { ...dryRunPlan("ops.job.run", 1, [{ method: "POST", endpoint: "cli/job/run", ...payload }]), jobId: selected.jobId }
-      : client
-        ? await client.request("POST", "cli/job/run", payload)
-        : { ok: true, dryRun: false, job: payload };
+    const result = await runJob(selected, { dryRun: Boolean(options.dryRun), reason: options.reason }, client);
     await auditOperation({ command: "ops.job.run", access: "write", args: payload, configHome: typeof configHome === "function" ? configHome() : configHome }, options.dryRun ? "dry-run" : "ok");
     return emit(output, result);
   });

@@ -10,39 +10,91 @@ type CommandLike = {
 };
 
 type OutputFn = (payload: unknown) => void;
-const fallback = (name: string, options: Record<string, unknown>) => ({ ok: true, command: name, data: options });
+type RequestMethod = "GET" | "POST";
+const requireClient = (client: ApiClient | undefined, command: string): ApiClient => {
+  if (!client) throw new Error(`${command.toUpperCase().replaceAll(" ", "_")}_REQUIRES_API_CLIENT`);
+  return client;
+};
 function emit(output: OutputFn | undefined, payload: unknown): unknown {
   if (output) output(payload);
   return payload;
+}
+
+function cleanBody(options: Record<string, unknown>, extra: Record<string, unknown> = {}) {
+  return Object.fromEntries(
+    Object.entries({ ...options, ...extra }).filter(([key, value]) => key !== "json" && value !== undefined && value !== ""),
+  );
+}
+
+function request(client: ApiClient | undefined, command: string, method: RequestMethod, path: string, body: Record<string, unknown>) {
+  return requireClient(client, command).request(method, path, cleanBody(body));
+}
+
+function customerLookup(options: Record<string, unknown>) {
+  if (options.companyId) {
+    return {
+      method: "POST" as const,
+      path: "hr/sysCompany/queryCompanyInfosById",
+      body: { companyIds: [options.companyId] },
+    };
+  }
+  if (options.companyCode) {
+    return {
+      method: "POST" as const,
+      path: "hr/sysCompany/queryCompanyInfosByCode",
+      body: { companyCodes: [options.companyCode] },
+    };
+  }
+  throw new Error("CUSTOMER_GET_REQUIRES_COMPANY_ID_OR_CODE");
 }
 
 export function registerOpsMiscCommands(program: CommandLike, client?: ApiClient, output?: OutputFn) {
   const ops = program;
 
   const stock = ops.command("stock").description("Stock operations commands");
-  stock.command("query").option("--item-code <itemCode>").option("--sku-code <skuCode>").option("--json").action(async (options) => emit(output, client ? await client.request("GET", "warehouse/stock/query", options) : fallback("stock query", options)));
-  stock.command("sync-status").option("--item-code <itemCode>").option("--json").action(async (options) => emit(output, client ? await client.request("GET", "warehouse/stock/sync-status", options) : fallback("stock sync-status", options)));
+  stock.command("query").option("--item-code <itemCode>").option("--sku-code <skuCode>").option("--page-index <pageIndex>").option("--page-size <pageSize>").option("--json").action(async (options) => {
+    return emit(output, await request(client, "stock query", "POST", "product/itemStock/statistics/page", { pageIndex: Number(options.pageIndex ?? 1), pageSize: Number(options.pageSize ?? 20), itemCode: options.itemCode, skuCode: options.skuCode }));
+  });
+  stock.command("sync-status").option("--item-code <itemCode>").option("--page-index <pageIndex>").option("--page-size <pageSize>").option("--json").action(async (options) => {
+    return emit(output, await request(client, "stock sync-status", "POST", "product/item/page/syncStockSellOut", { pageIndex: Number(options.pageIndex ?? 1), pageSize: Number(options.pageSize ?? 20), itemCodeList: options.itemCode ? [options.itemCode] : undefined }));
+  });
 
-  ops.command("customer").description("Customer operations commands").command("get").option("--company-code <companyCode>").option("--company-id <companyId>").option("--json").action(async (options) => emit(output, client ? await client.request("GET", "company/customer/get", options) : fallback("customer get", options)));
-  ops.command("store").description("Store operations commands").command("get").option("--company-id <companyId>").option("--store-code <storeCode>").option("--json").action(async (options) => emit(output, client ? await client.request("GET", "company/store/get", options) : fallback("store get", options)));
-  ops.command("retailer").description("Retailer operations commands").command("get").option("--distributor-id <distributorId>").option("--json").action(async (options) => emit(output, client ? await client.request("GET", "company/retailer/get", options) : fallback("retailer get", options)));
+  ops.command("customer").description("Customer operations commands").command("get").option("--company-code <companyCode>").option("--company-id <companyId>").option("--json").action(async (options) => {
+    const lookup = customerLookup(options);
+    return emit(output, await request(client, "customer get", lookup.method, lookup.path, lookup.body));
+  });
+  ops.command("store").description("Store operations commands").command("get").requiredOption("--company-id <companyId>").option("--json").action(async (options) => emit(output, await request(client, "store get", "GET", "hr/sysCompany/queryCompanyInfoById", { companyId: options.companyId })));
+  ops.command("retailer").description("Retailer operations commands").command("get").option("--distributor-id <distributorId>").option("--sword <sword>").option("--page-index <pageIndex>").option("--page-size <pageSize>").option("--json").action(async (options) => emit(output, await request(client, "retailer get", "POST", "hr/sysCompany/queryDistributorRole/middleGround", { distributorId: options.distributorId, sword: options.sword, pageIndex: Number(options.pageIndex ?? 1), pageSize: Number(options.pageSize ?? 20) })));
 
   const iam = ops.command("iam").description("IAM operations commands");
-  iam.command("user").option("--user <user>").option("--json").action(async (options) => emit(output, client ? await client.request("GET", "manage/iam/user", options) : fallback("iam user", options)));
-  iam.command("role").option("--role-code <roleCode>").option("--json").action(async (options) => emit(output, client ? await client.request("GET", "manage/iam/role", options) : fallback("iam role", options)));
+  iam.command("user").option("--user <user>").option("--id <id>").option("--page-index <pageIndex>").option("--page-size <pageSize>").option("--json").action(async (options) => {
+    if (options.id) return emit(output, await request(client, "iam user", "GET", "hr/iamUser/detailById", { id: options.id }));
+    return emit(output, await request(client, "iam user", "POST", "hr/iamUser/userPage", { sword: options.user, pageIndex: Number(options.pageIndex ?? 1), pageSize: Number(options.pageSize ?? 20) }));
+  });
+  iam.command("role").option("--role-code <roleCode>").option("--id <id>").option("--page-index <pageIndex>").option("--page-size <pageSize>").option("--json").action(async (options) => {
+    if (options.id) return emit(output, await request(client, "iam role", "GET", "hr/iamRole/detailById", { id: options.id }));
+    return emit(output, await request(client, "iam role", "POST", "hr/iamRole/rolePage", { roleCode: options.roleCode, pageIndex: Number(options.pageIndex ?? 1), pageSize: Number(options.pageSize ?? 20) }));
+  });
 
   const config = ops.command("config").description("Configuration operations commands");
-  config.command("get").requiredOption("--key <key>").option("--json").action(async (options) => emit(output, client ? await client.request("GET", "config/needSet/get", options) : fallback("config get", options)));
+  config.command("get").requiredOption("--key <key>").option("--json").action(() => {
+    throw new Error("CONFIG_GET_REQUIRES_BACKEND_FACADE");
+  });
   config.command("set").requiredOption("--key <key>").requiredOption("--value <value>").option("--dry-run").option("--confirm").option("--reason <reason>").option("--json").action(async (options) => {
     assertWriteGate(options, "write");
-    const result = options.dryRun ? { ok: true, mode: "dry-run", command: "config set", target: options.key } : client ? await client.request("POST", "config/needSet/save", options) : fallback("config set", options);
+    if (!options.dryRun) throw new Error("CONFIG_SET_REQUIRES_BACKEND_FACADE");
+    const result = { ok: true, mode: "dry-run", command: "config set", target: options.key, blocked: true, message: "No safe existing configuration facade has been mapped for CLI writes." };
     await auditOperation({ command: "ops.config.set", access: "write", args: options }, options.dryRun ? "dry-run" : "ok");
     return emit(output, result);
   });
 
   const log = ops.command("log").description("Log operations commands");
-  log.command("api").option("--request-id <requestId>").option("--order-no <orderNo>").option("--json").action(async (options) => emit(output, client ? await client.request("GET", "manage/log/api", options) : fallback("log api", options)));
-  log.command("sync-warning").option("--order-no <orderNo>").option("--item-code <itemCode>").option("--json").action(async (options) => emit(output, client ? await client.request("GET", "manage/log/sync-warning", options) : fallback("log sync-warning", options)));
+  log.command("api").option("--request-id <requestId>").option("--order-no <orderNo>").option("--json").action(() => {
+    throw new Error("LOG_API_REQUIRES_BACKEND_FACADE");
+  });
+  log.command("sync-warning").option("--order-no <orderNo>").option("--item-code <itemCode>").option("--json").action(() => {
+    throw new Error("LOG_SYNC_WARNING_REQUIRES_BACKEND_FACADE");
+  });
 
   return ops;
 }

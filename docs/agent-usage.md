@@ -4,12 +4,28 @@ The Bmall CLI is API-first. Business commands do not use browser automation, DOM
 
 Agents should discover supported commands from `manifests/bmall.commands.json`. Every command declares `audience`, `access`, `auth`, `browser`, `args`, and output `columns`.
 
+## 品牌和门店上下文
+
+Bmall 是多品牌系统。做订单、商品、库存或排障前，先确认当前 token 所在品牌和门店：
+
+```bash
+bmall company groups --json
+bmall company switch-group --group-id <groupId> --json
+bmall company list --json
+bmall company switch --company-id <companyId> --json
+bmall whoami --json
+```
+
+CLI 会根据 token bundle 自动判断账号类型：老 Bmall 账号走 `manage/app/Common/*`，IAM 账号走 `hr/iamUser/*`。Agent 优先使用稳定的 `groupId/companyId`；只有人工从老后台拿到了内部 ID 时，才使用 `--sg-id` 或 `--sc-id`。
+
 ## Operations Pattern
 
 Use read commands first:
 
 ```bash
 bmall ops order diagnose --order-no DH202605230001 --json
+bmall ops order diagnose-pending --order-id 10001 --json
+bmall ops address check --company-id <companyId> --json
 bmall ops product master search --item-code SM123 --json
 bmall ops export task list --type order --json
 ```
@@ -31,9 +47,33 @@ bmall ops job list --module order --json
 
 `auth.renew` is implemented and renews the saved token through `manage/app/token/renewal`.
 
-`agent.*` commands are not implemented in this CLI slice. The manifest lists `agent.explain-error` only as an explicit unsupported placeholder so agents do not assume an executable local agent API exists.
+`agent.explain-error` is a deterministic local helper. It does not call an LLM; it maps known Bmall error codes and messages to concrete CLI diagnosis/remediation commands.
 
 Order submit must be treated as financial. Without a real API runtime, even `--confirm` returns blocked/unsupported; never infer success from an offline plan.
+
+## Puma/多品牌订单地址排障
+
+如果审核报 `[401700000] 收货地址不完整，请先维护区`，先切到正确品牌和门店，再查地址完整性。这个错误不是账户余额不足，而是地址的 `regionName` 为空或仍是占位值 `区`。
+
+```bash
+bmall agent explain-error --error-code 401700000 --json
+bmall company groups --json
+bmall company switch-group --group-id <PUMA_GROUP_ID> --json
+bmall company list --sword "<门店关键字>" --json
+bmall company switch --company-id <COMPANY_ID> --json
+bmall ops order diagnose-pending --order-id <PENDING_ORDER_ID> --json
+bmall ops address check --company-id <COMPANY_ID> --json
+```
+
+手工地址可以先 dry-run 修复：
+
+```bash
+bmall ops address patch --company-id <COMPANY_ID> --address-id <ADDRESS_ID> --region-name <区县> --region-code <区县编码> --dry-run --json
+```
+
+MDM 来源地址不要直接改，走门店主数据修正和同步。
+
+`ops config get/set`、`ops log api`、`ops log sync-warning` 当前只暴露为明确缺口：没有安全后端 facade 时会抛 `*_REQUIRES_BACKEND_FACADE`，不要把它们当成页面专属流程的替代命令。
 
 ## Stable Diagnosis Shape
 
@@ -55,4 +95,4 @@ Order submit must be treated as financial. Without a real API runtime, even `--c
 }
 ```
 
-Agents can depend on these keys even when backend support is partial.
+Agents can depend on these keys. The command requires a real API token/client and will not synthesize an empty diagnosis when the API is unavailable.

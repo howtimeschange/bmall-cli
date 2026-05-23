@@ -51,19 +51,25 @@ describe('write safety gates', () => {
     expect(JSON.stringify(audit)).not.toContain('job-secret-token');
   });
 
-  it('adds pending-order guarded local skeleton commands', async () => {
+  it('guards pending-order destructive commands before API execution', async () => {
     const outputs: unknown[] = [];
+    const calls: unknown[] = [];
+    const client = {
+      request: async (...args: unknown[]) => {
+        calls.push(args);
+        return { ok: true };
+      },
+    };
     const program = new Command().exitOverride();
-    registerPendingOrderCommands(program, (payload) => outputs.push(payload));
+    registerPendingOrderCommands(program, (payload) => outputs.push(payload), client);
 
-    await expect(program.parseAsync(['node', 'bmall', 'pending-order', 'cancel', '--order-no', 'PO001', '--confirm'])).rejects.toThrow(
+    await expect(program.parseAsync(['node', 'bmall', 'pending-order', 'cancel', '--order-id', '10001', '--confirm'])).rejects.toThrow(
       'WRITE_REQUIRES_REASON',
     );
-    await program.parseAsync(['node', 'bmall', 'pending-order', 'source-type', '--json']);
-    await program.parseAsync(['node', 'bmall', 'pending-order', 'review', '--order-no', 'PO001', '--dry-run', '--json']);
+    await program.parseAsync(['node', 'bmall', 'pending-order', 'source-type', '--order-id', '10001', '--json']);
 
-    expect(outputs.at(-2)).toMatchObject({ command: 'pending-order.source-type', supported: false });
-    expect(outputs.at(-1)).toMatchObject({ command: 'pending-order.review', mode: 'dry-run', blocked: true });
+    expect(calls.at(-1)).toEqual(['POST', 'b2b/pendingReviewOrder/mini/orderSourceType/check', { orderId: '10001' }]);
+    expect(outputs.at(-1)).toMatchObject({ ok: true });
   });
 
   it('throws a stable error when CLI order submit has no dry-run or confirm', async () => {

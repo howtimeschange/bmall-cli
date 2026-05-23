@@ -6,7 +6,8 @@ type ManifestCommand = {
   description: string;
   audience: string;
   access: string;
-  auth: string;
+  strategy?: string;
+  auth?: string;
   browser: boolean;
   args?: Array<{ name: string; required?: boolean }>;
   columns?: string[];
@@ -24,7 +25,7 @@ function renderCommand(command: ManifestCommand): string {
     "",
     `- Audience: ${command.audience}`,
     `- Access: ${command.access}`,
-    `- Auth: ${command.auth}`,
+    `- Auth: ${command.strategy ?? command.auth ?? "unknown"}`,
     `- Browser: ${command.browser}`,
     `- Args: ${args || "none"}`,
     `- Columns: ${columns || "none"}`,
