@@ -9,7 +9,7 @@ Bmall CLI 是 Semir Reabam/Bmall 订货商城的 API-first 命令行客户端。
 | 你是谁 | Bmall CLI 能帮你做什么 | 推荐入口 |
 | --- | --- | --- |
 | 普通客户 | 搜商品、查 SKU 和库存、规划订单、校验规则，先 dry-run 预演，并在授权后真实下单。 | `product`、`stock`、`order`、`replenishment`、`pickup` |
-| 系统运维 | 切品牌/门店、查订单链路、排查待审核失败、维护地址、查商品主数据、轮询导出任务、运行 allowlist job。 | `company`、`ops order`、`ops address`、`ops product`、`ops export task`、`ops job` |
+| 系统运维 | 切品牌/门店、查订单链路、排查待审核失败、维护地址、同步 MDM 门店/经销商、查商品主数据、执行商品上新配置、轮询导出任务、运行 allowlist job。 | `company`、`ops order`、`ops address`、`ops store mdm`、`ops retailer mdm`、`ops product`、`ops export task`、`ops job` |
 | AI Agent | 读取 manifest 做能力规划，用 `--json` 拿稳定输出，根据错误码拿确定性排障剧本。 | `manifest`、`agent knowledge`、`agent explain-error` |
 
 业务命令不使用浏览器自动化、DOM 读取、截图、CDP 或网络拦截。浏览器只用于交互式登录引导。
@@ -233,11 +233,13 @@ node docs/source-knowledge/scripts/extract-source-knowledge.mjs
 | 新店订单 | 查询新店订单、详情、货品、关联订单，生成确认计划，执行新店提货链路。 | `new-store-order list`、`new-store-order confirm-plan`、`new-store-order submit` | dry-run 会展示完整调用链。 |
 | 待审核订单 | 查看来源类型、详情、审核前检查、审核、取消、诊断。 | `pending-order detail`、`pending-order review-check`、`pending-order review` | 审核/取消是高风险写操作。 |
 | 订单运维 | 诊断订单、待审核单、时间线、关联对象、阻断原因、拆单、同步检查、导出。 | `ops order diagnose`、`ops order diagnose-pending`、`ops order relations` | 没有安全 API 的能力会明确返回 unsupported。 |
-| 地址排查和修复 | 查询地址、检查省市区和详细地址完整性，patch 可修改的手工地址。 | `ops address check`、`ops address patch` | MDM 地址禁止 CLI 直接修改。 |
-| 商品运维 | 查主数据、商品应用、商品组、套装、标签、价格，执行受控导入/应用更新/图片同步。 | `ops product master search`、`ops product apply list`、`ops product image-sync` | 导入和更新先 dry-run，再确认。 |
+| 地址排查和修复 | 查询地址、检查省市区和详细地址完整性，创建、更新、设默认、删除或 patch 可修改的手工地址。 | `ops address list`、`ops address check`、`ops address create`、`ops address update`、`ops address set-default` | MDM 地址禁止 CLI 直接修改；地址写操作需要确认。 |
+| 商品运维 | 查主数据、商品应用、商品组、套装、标签、价格，执行受控导入、应用更新、图片同步和上新前配置检查。 | `ops product master search`、`ops product apply list`、`ops product launch-check`、`ops product image-sync` | 导入、应用更新、图片同步先 dry-run，再确认。 |
+| 商品上新配置 | 批量诊断商品上新准备度，并串联 MDM 同步、图片同步、套装货品配置和门店商品应用配置。 | `ops product launch-check`、`ops product launch-setup` | `launch-setup` 是批量写操作，必须 `--dry-run` 或 `--confirm --reason`。 |
 | 库存运维 | 查询库存和同步状态。 | `ops stock query`、`ops stock sync-status` | 不暴露任意同步 job。 |
-| 客户/门店/经销商 | 查询客户、门店、经销商基础信息。 | `ops customer get`、`ops store get`、`ops retailer get` | 只读查询，敏感字段脱敏。 |
+| 客户/门店/经销商 | 查询客户、门店、经销商基础信息；按编码或更新时间拉取 MDM 暂存数据，比较差异并受控确认到业务档案。 | `ops customer get`、`ops store get`、`ops retailer get`、`ops store mdm sync-by-codes`、`ops retailer mdm confirm` | 基础查询只读；MDM confirm 需要 dry-run 或确认理由。 |
 | IAM | 查询 IAM 用户和角色。 | `ops iam user`、`ops iam role` | 不修改 IAM 权限。 |
+| 业务报表 | 查询柔供提货活动、客户提货进度和客户+SKC 粒度统计。 | `report supply-pickup-activity`、`report supply-pickup-customer`、`report pickup-customer-skc` | 只读报表查询，输出适合 Agent 或表格后处理。 |
 | 异步导出任务 | 查询任务、轮询完成、下载文件。 | `ops export task list`、`ops export task wait`、`ops export task download` | 轮询有超时；下载路径显式指定。 |
 | Allowlist job | 查看和运行 allowlist 中的安全 job。 | `ops job list`、`ops job run` | 禁止通用 `schedule/dowork`。 |
 | 配置与日志缺口 | 明确标识仍需要后端安全 facade 的配置/日志能力。 | `ops config get`、`ops log api` | 返回 `*_REQUIRES_BACKEND_FACADE`，不伪装成功。 |
