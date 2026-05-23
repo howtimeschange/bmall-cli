@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "policy": "Only jobs in this file may be shown or run. Do not expose generic schedule/dowork.",
+  "jobs": [
+    {
+      "jobId": "orderDailyStatJob",
+      "module": "order",
+      "description": "Order dashboard daily statistics backfill candidate",
+      "enabled": false,
+      "status": "pendingApproval",
+      "requiresApproval": true,
+      "targetObject": "orderDailyStatJob",
+      "targetMethod": "execute",
+      "fixedParams": {
+        "scope": "daily-stat"
+      },
+      "impact": "Recomputes order dashboard statistics for an approved date and group after owner confirmation."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.vitest/
+coverage/
+
+.DS_Store
+*.log
+
+# Local credentials and audit data
+.bmall-cli/
+credentials.json
+audit/
+
+# Temporary smoke-test artifacts
+.tmp/
+tmp/
