@@ -247,6 +247,23 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
+      "args": [],
+      "columns": [
+        "id",
+        "version",
+        "entries",
+        "sourceReposRequired"
+      ],
+      "name": "agent.knowledge",
+      "description": "Show bundled diagnostic knowledge pack metadata for external users",
+      "audience": "core",
+      "access": "read",
+      "strategy": "none"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
       "args": [
         {
           "name": "error-code",
@@ -259,11 +276,14 @@
       ],
       "columns": [
         "code",
-        "rootCause",
-        "commands"
+        "knowledgePack",
+        "evidence",
+        "playbook",
+        "commands",
+        "supportBundleHints"
       ],
       "name": "agent.explain-error",
-      "description": "Explain known Bmall error codes and map them to CLI remediation commands",
+      "description": "Explain known Bmall error codes using bundled diagnostic knowledge and remediation playbooks",
       "audience": "core",
       "access": "read",
       "strategy": "none"

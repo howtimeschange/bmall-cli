@@ -1,5 +1,16 @@
 # 运维 Runbook
 
+## 外部分发诊断知识
+
+外部用户安装的 CLI 不要求本地有 Bmall 后端、后台或小程序源码。已确认的错误码解释和排查剧本会随 CLI 作为版本化知识包发布：
+
+```bash
+bmall agent knowledge --json
+bmall agent explain-error --error-code 401700000 --json
+```
+
+运维支持收到用户反馈时，先记录知识包 `version`、出错命令 `requestId`、错误码、错误原文、脱敏后的 `profile/env/groupId/companyId/orderId` 或 `orderNo`。不要要求外部用户提供源码路径，也不要让用户发送 token、cookie、authorization header、完整手机号或身份证号。
+
 ## 订单诊断
 
 先使用标准化诊断命令：
@@ -28,6 +39,7 @@ bmall ops order sync-check --type mid-presale --presale-order-id P001 --json
 先用 CLI 切到正确品牌和门店：
 
 ```bash
+bmall agent knowledge --json
 bmall agent explain-error --error-code 401700000 --json
 bmall company groups --json
 bmall company switch-group --group-id <PUMA_GROUP_ID> --json

@@ -4,6 +4,14 @@ The Bmall CLI is API-first. Business commands do not use browser automation, DOM
 
 Agents should discover supported commands from `manifests/bmall.commands.json`. Every command declares `audience`, `access`, `auth`, `browser`, `args`, and output `columns`.
 
+Released CLI bundles are designed for external users who do not have local access to the Bmall source repositories. Known diagnosis rules are therefore shipped inside the CLI itself as a bundled knowledge pack:
+
+```bash
+bmall agent knowledge --json
+```
+
+This command exposes the knowledge pack id, schema version, bundled version, and the currently included error summaries. `sourceReposRequired: false` means the published CLI package carries enough packaged knowledge for first-line diagnosis without local source code.
+
 ## 品牌和门店上下文
 
 Bmall 是多品牌系统。做订单、商品、库存或排障前，先确认当前 token 所在品牌和门店：
@@ -47,7 +55,14 @@ bmall ops job list --module order --json
 
 `auth.renew` is implemented and renews the saved token through `manage/app/token/renewal`.
 
-`agent.explain-error` is a deterministic local helper. It does not call an LLM; it maps known Bmall error codes and messages to concrete CLI diagnosis/remediation commands.
+`agent.explain-error` is a deterministic local helper. It does not call an LLM; it maps known Bmall error codes and messages to bundled diagnosis/remediation playbooks and returns the knowledge pack version with the answer.
+
+When an external user escalates a case, ask them to include:
+
+- `bmall agent knowledge --json` output version
+- the failing command output
+- `requestId`
+- redacted `profile/env/groupId/companyId/orderId` or `orderNo`
 
 Order submit must be treated as financial. Without a real API runtime, even `--confirm` returns blocked/unsupported; never infer success from an offline plan.
 
@@ -56,6 +71,7 @@ Order submit must be treated as financial. Without a real API runtime, even `--c
 如果审核报 `[401700000] 收货地址不完整，请先维护区`，先切到正确品牌和门店，再查地址完整性。这个错误不是账户余额不足，而是地址的 `regionName` 为空或仍是占位值 `区`。
 
 ```bash
+bmall agent knowledge --json
 bmall agent explain-error --error-code 401700000 --json
 bmall company groups --json
 bmall company switch-group --group-id <PUMA_GROUP_ID> --json
