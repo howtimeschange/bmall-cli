@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { NewStoreAdapter } from '../order/adapters/new-store.js';
 import type { GlobalOptions } from '../../auth/commands.js';
-import { assertWriteGate, auditOperation } from '../ops/safety.js';
+import { authorizeWriteGate, auditOperation } from '../ops/safety.js';
 import { callBmallApi, callBmallApiSequence, cleanOptionsBody, dryRunSequence, mergeFileAndOptions, type DomainCommandDeps, type OutputFn } from '../common/api.js';
 
 export function registerNewStoreOrderCommands(
@@ -24,7 +24,6 @@ export function registerNewStoreOrderCommands(
   ], cleanOptionsBody(opts)));
   cmd.command('validate').option('--file <file>').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.validate, mergeFileAndOptions(opts)));
   cmd.command('submit').option('--file <file>').option('--dry-run').option('--confirm').option('--reason <reason>').option('--json').action(async (opts) => {
-    assertWriteGate(opts, 'financial');
     const body = mergeFileAndOptions(opts);
     const steps = [
       { name: 'checkPickupGoods', path: adapter.endpoints.checkPickupGoods },
@@ -32,6 +31,10 @@ export function registerNewStoreOrderCommands(
       { name: 'validate', path: adapter.endpoints.validate },
       { name: 'submit', path: adapter.endpoints.submit },
     ];
+    await authorizeWriteGate(opts, 'financial', {
+      command: 'new-store-order.submit',
+      summary: `执行新店订单提交流程${opts.file ? `，来源文件 ${String(opts.file)}` : ''}。`,
+    });
     if (opts.dryRun) {
       await auditOperation({ command: 'new-store-order.submit', access: 'financial', args: body, configHome: requireGlobals(getGlobals).configHome }, 'dry-run');
       output(dryRunSequence('new-store-order.submit', steps, body));

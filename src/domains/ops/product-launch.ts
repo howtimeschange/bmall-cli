@@ -1,4 +1,4 @@
-import { assertWriteGate, auditOperation, type WriteGateOptions } from "./safety.js";
+import { authorizeWriteGate, auditOperation, type WriteGateOptions } from "./safety.js";
 
 type ApiClient = { request: (method: string, path: string, body?: unknown) => Promise<unknown> };
 
@@ -85,7 +85,6 @@ const endpoints = {
 export const productLaunchEndpoints = endpoints;
 
 export async function setupProductLaunch(client: ApiClient, options: ProductLaunchSetupOptions) {
-  assertWriteGate(options, "write");
   const itemCodes = parseCsv(options.itemCodes, "PRODUCT_LAUNCH_SETUP_REQUIRES_ITEM_CODES");
   const packageNames = parseCsv(options.packageNames, "PRODUCT_LAUNCH_SETUP_REQUIRES_PACKAGE_NAMES");
   const companyCodes = parseCsv(options.companyCodes, "PRODUCT_LAUNCH_SETUP_REQUIRES_COMPANY_CODES");
@@ -93,6 +92,10 @@ export async function setupProductLaunch(client: ApiClient, options: ProductLaun
   if (itemCodes.length > 1000) throw new Error("PRODUCT_LAUNCH_SETUP_ITEM_CODES_LIMIT_1000");
   if (packageNames.length > 10) throw new Error("PRODUCT_LAUNCH_SETUP_PACKAGE_NAMES_LIMIT_10");
   if (companyCodes.length > 2000) throw new Error("PRODUCT_LAUNCH_SETUP_COMPANY_CODES_LIMIT_2000");
+  await authorizeWriteGate(options, "write", {
+    command: "ops.product.launch-setup",
+    summary: `商品 ${itemCodes.length} 个，套装 ${packageNames.length} 个，门店 ${companyCodes.length} 个；将执行 MDM 同步、图片同步、套装配置和门店应用。`,
+  });
 
   const packagePlans: ProductLaunchPackagePlan[] = [];
   for (const packageName of packageNames) {

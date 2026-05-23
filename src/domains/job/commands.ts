@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { assertWriteGate, auditOperation, dryRunPlan } from "../ops/safety.js";
+import { authorizeWriteGate, auditOperation, dryRunPlan } from "../ops/safety.js";
 
 export interface JobAllowlistEntry {
   jobId: string;
@@ -81,9 +81,12 @@ export function registerJobCommands(program: CommandLike, client?: ApiClient, al
     return emit(output, { jobs: listJobs(loadJobAllowlist(allowlistPath), options.module ? String(options.module) : undefined) });
   });
   job.command("run").requiredOption("--job-id <jobId>").option("--dry-run").option("--confirm").option("--reason <reason>").option("--json").action(async (options) => {
-    assertWriteGate(options, "write");
     const selected = selectRunnableJob(loadJobAllowlist(allowlistPath), String(options.jobId));
     const payload = buildJobRunPayload(selected, options.reason);
+    await authorizeWriteGate(options, "write", {
+      command: "ops.job.run",
+      summary: selected.impact ?? selected.description,
+    });
     const result = await runJob(selected, { dryRun: Boolean(options.dryRun), reason: options.reason }, client);
     await auditOperation({ command: "ops.job.run", access: "write", args: payload, configHome: typeof configHome === "function" ? configHome() : configHome }, options.dryRun ? "dry-run" : "ok");
     return emit(output, result);

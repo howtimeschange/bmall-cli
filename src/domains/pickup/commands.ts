@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { PickupAdapter } from '../order/adapters/pickup.js';
 import type { GlobalOptions } from '../../auth/commands.js';
-import { assertWriteGate, auditOperation } from '../ops/safety.js';
+import { authorizeWriteGate, auditOperation } from '../ops/safety.js';
 import { callBmallApi, callBmallApiSequence, cleanOptionsBody, dryRunSequence, mergeFileAndOptions, type DomainCommandDeps, type OutputFn } from '../common/api.js';
 
 export function registerPickupCommands(
@@ -21,12 +21,15 @@ export function registerPickupCommands(
   cmd.command('related-presale').requiredOption('--pickup-order-id <pickupOrderId>').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.relatedPresale, cleanOptionsBody(opts)));
   cmd.command('validate').requiredOption('--pickup-order-id <pickupOrderId>').option('--file <file>').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.validate, mergeFileAndOptions(opts)));
   cmd.command('submit').requiredOption('--pickup-order-id <pickupOrderId>').option('--file <file>').option('--dry-run').option('--confirm').option('--reason <reason>').option('--json').action(async (opts) => {
-    assertWriteGate(opts, 'financial');
     const body = mergeFileAndOptions(opts);
     const steps = [
       { name: 'validate', path: adapter.endpoints.validate },
       { name: 'submit', path: adapter.endpoints.submit },
     ];
+    await authorizeWriteGate(opts, 'financial', {
+      command: 'pickup.submit',
+      summary: `提交提货单 ${String(opts.pickupOrderId)}。`,
+    });
     if (opts.dryRun) {
       await auditOperation({ command: 'pickup.submit', access: 'financial', args: body, configHome: requireGlobals(getGlobals).configHome }, 'dry-run');
       output(dryRunSequence('pickup.submit', steps, body));
@@ -36,7 +39,10 @@ export function registerPickupCommands(
     await auditOperation({ command: 'pickup.submit', access: 'financial', args: body, configHome: requireGlobals(getGlobals).configHome }, 'ok');
   });
   cmd.command('refuse').requiredOption('--pickup-order-id <pickupOrderId>').requiredOption('--reason <reason>').option('--dry-run').option('--confirm').option('--json').action(async (opts) => {
-    assertWriteGate(opts, 'destructive');
+    await authorizeWriteGate(opts, 'destructive', {
+      command: 'pickup.refuse',
+      summary: `拒绝提货单 ${String(opts.pickupOrderId)}。`,
+    });
     const body = cleanOptionsBody(opts);
     if (opts.dryRun) {
       await auditOperation({ command: 'pickup.refuse', access: 'destructive', args: body, configHome: requireGlobals(getGlobals).configHome }, 'dry-run');

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { parseOrderDraft } from '../../schemas/order.js';
 import { MidPresaleAdapter } from '../order/adapters/mid-presale.js';
 import type { GlobalOptions } from '../../auth/commands.js';
-import { assertWriteGate, auditOperation } from '../ops/safety.js';
+import { authorizeWriteGate, auditOperation } from '../ops/safety.js';
 import { callBmallApi, callBmallApiSequence, cleanOptionsBody, dryRunSequence, type DomainCommandDeps, type OutputFn } from '../common/api.js';
 
 export function registerMidOrderCommands(
@@ -28,13 +28,16 @@ export function registerMidOrderCommands(
     output(await adapter.validate(await adapter.buildPlan(draft)));
   });
   cmd.command('submit').requiredOption('--file <file>').option('--dry-run').option('--confirm').option('--reason <reason>').option('--resume-waiting-order').option('--json').action(async (opts) => {
-    assertWriteGate(opts, 'financial');
     const body = JSON.parse(readFileSync(opts.file, 'utf8')) as Record<string, unknown>;
     const steps = [
       ...(opts.resumeWaitingOrder ? [{ name: 'waitSubmitCheck', path: adapter.endpoints.waitSubmitCheck }] : []),
       { name: 'submitCheck', path: adapter.endpoints.validate },
       { name: 'submit', path: adapter.endpoints.submit },
     ];
+    await authorizeWriteGate(opts, 'financial', {
+      command: 'mid-order.submit',
+      summary: `提交中短期订单，来源文件 ${String(opts.file)}。`,
+    });
     if (opts.dryRun) {
       await auditOperation({ command: 'mid-order.submit', access: 'financial', args: body, configHome: requireGlobals(getGlobals).configHome }, 'dry-run');
       output(dryRunSequence('mid-order.submit', steps, body));

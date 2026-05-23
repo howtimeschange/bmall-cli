@@ -10,7 +10,7 @@ import { BmallOrderTypeSchema, parseOrderDraft } from '../../schemas/order.js';
 import { getOrderAdapter } from './adapters/index.js';
 import { inspectOrderFlow, listOrderTypes } from './flow-inspector.js';
 import { buildRuleChainSkeleton } from './rule-chain.js';
-import { assertWriteGate, dryRunPlan } from '../ops/safety.js';
+import { authorizeWriteGate, dryRunPlan } from '../ops/safety.js';
 
 type OutputFn = (payload: unknown) => void;
 type ClientLike = { send<T = unknown>(opts: BmallRequestOptions): Promise<{ data?: T; requestId: string; durationMs: number }> };
@@ -74,10 +74,13 @@ export function registerOrderCommands(program: Command, getGlobalsOrOutput?: (()
     output(await adapter.validate(plan));
   });
   order.command('submit').requiredOption('--file <file>').option('--type <type>').option('--confirm').option('--dry-run').option('--reason <reason>').option('--json').action(async (opts) => {
-    assertWriteGate(opts, 'financial');
     const draft = parseOrderDraft({ ...JSON.parse(readFileSync(opts.file, 'utf8')), orderType: opts.type ?? undefined });
     const adapter = getOrderAdapter(draft.orderType);
     const plan = await adapter.buildPlan(draft);
+    await authorizeWriteGate(opts, 'financial', {
+      command: 'order.submit',
+      summary: `提交 ${adapter.displayName}，公司 ${draft.companyId}，${draft.items.length} 行商品。`,
+    });
     output(await adapter.submit(plan, { confirm: opts.confirm, dryRun: opts.dryRun, reason: opts.reason }));
   });
   order.command('list').option('--status <status>').option('--from <from>').option('--to <to>').option('--company-id <companyId>').option('--json').action(async (opts) => {
@@ -95,12 +98,15 @@ export function registerOrderCommands(program: Command, getGlobalsOrOutput?: (()
     });
   });
   order.command('cancel').requiredOption('--order-no <orderNo>').option('--confirm').option('--dry-run').option('--reason <reason>').option('--company-id <companyId>').option('--json').action(async (opts) => {
-    assertWriteGate(opts, 'destructive');
     const body = {
       orderNo: opts.orderNo,
       reason: opts.reason,
       companyId: opts.companyId
     };
+    await authorizeWriteGate(opts, 'destructive', {
+      command: 'order.cancel',
+      summary: `取消订单 ${opts.orderNo}${opts.companyId ? `，公司 ${opts.companyId}` : ''}。`,
+    });
     if (opts.dryRun) {
       output(dryRunPlan('order.cancel', 1, [{ method: 'POST', endpoint: orderEndpoints.cancel, body }]));
       return;
@@ -167,9 +173,12 @@ export function registerAdapterCommand(program: Command, commandName: string, ty
     output(await adapter.validate(plan));
   });
   cmd.command('submit').requiredOption('--file <file>').option('--confirm').option('--dry-run').option('--reason <reason>').option('--json').action(async (opts) => {
-    assertWriteGate(opts, 'financial');
     const draft = parseOrderDraft({ ...JSON.parse(readFileSync(opts.file, 'utf8')), orderType: adapter.type });
     const plan = await adapter.buildPlan(draft);
+    await authorizeWriteGate(opts, 'financial', {
+      command: `${commandName}.submit`,
+      summary: `提交 ${adapter.displayName}，公司 ${draft.companyId}，${draft.items.length} 行商品。`,
+    });
     output(await adapter.submit(plan, { confirm: opts.confirm, dryRun: opts.dryRun, reason: opts.reason }));
   });
   cmd.command('diagnose').option('--order-no <orderNo>').option('--order-id <orderId>').option('--json').action(async (opts) => output(await adapter.diagnose(opts)));

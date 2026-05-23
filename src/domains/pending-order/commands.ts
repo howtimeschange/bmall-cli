@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { readFileSync } from 'node:fs';
 import { registerAdapterCommand } from '../order/commands.js';
-import { assertWriteGate, auditOperation, dryRunPlan, type WriteGateOptions } from '../ops/safety.js';
+import { authorizeWriteGate, auditOperation, dryRunPlan, type WriteGateOptions } from '../ops/safety.js';
 
 type ApiClient = { request: (method: string, path: string, body?: unknown) => Promise<unknown> };
 
@@ -31,9 +31,12 @@ export function registerPendingOrderCommands(program: Command, output: (payload:
     output(await requireClient(client).request('POST', endpoints.reviewCheck, body));
   });
   pending.command('review').requiredOption('--file <file>').option('--dry-run').option('--confirm').option('--reason <reason>').option('--mini').option('--json').action(async (opts: WriteGateOptions & Record<string, unknown>) => {
-    assertWriteGate(opts, 'write');
     const body = readJson(String(opts.file));
     const endpoint = opts.mini ? endpoints.miniReview : endpoints.review;
+    await authorizeWriteGate(opts, 'write', {
+      command: 'pending-order.review',
+      summary: `审核待审核单，来源文件 ${String(opts.file)}。`,
+    });
     if (opts.dryRun) {
       const result = dryRunPlan('pending-order.review', 1, [{ method: 'POST', endpoint, body }]);
       await auditOperation({ command: 'pending-order.review', access: 'write', args: body, configHome: typeof configHome === 'function' ? configHome() : configHome }, 'dry-run');
@@ -45,7 +48,10 @@ export function registerPendingOrderCommands(program: Command, output: (payload:
     output(result);
   });
   pending.command('cancel').requiredOption('--order-id <orderId>').option('--dry-run').option('--confirm').option('--reason <reason>').option('--json').action(async (opts: WriteGateOptions & Record<string, unknown>) => {
-    assertWriteGate(opts, 'destructive');
+    await authorizeWriteGate(opts, 'destructive', {
+      command: 'pending-order.cancel',
+      summary: `取消待审核单 ${String(opts.orderId)}。`,
+    });
     const body = { orderId: Number(opts.orderId), cancelReason: opts.reason };
     if (opts.dryRun) {
       output(dryRunPlan('pending-order.cancel', 1, [{ method: 'POST', endpoint: endpoints.cancel, body }]));

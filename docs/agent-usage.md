@@ -45,7 +45,7 @@ bmall ops product apply update --input apply-items.csv --dry-run --json
 bmall ops product apply update --input apply-items.csv --confirm --reason "approved product application change" --json
 ```
 
-Agents must treat every business-state mutation as user-authorized only. Do not execute create, update, delete, clear, cancel, cart mutation, order submit, pending-order review, pickup refusal, address create/update/patch/delete/default, MDM sync confirm/sync-by-* commands, product application update, product import, image sync, or job run unless the user has explicitly approved the exact operation. Use `--dry-run` first, then execute the real command only with `--confirm --reason`.
+Agents must treat every business-state mutation as user-authorized only. Do not execute create, update, delete, clear, cancel, cart mutation, order submit, pending-order review, pickup refusal, address create/update/patch/delete/default, MDM sync confirm/sync-by-* commands, product application update, product import, image sync, or job run unless the user has explicitly approved the exact operation. Use `--dry-run` first, then execute the real command only with `--confirm --reason`. The interactive terminal confirmation is for humans; Agent and `--json` calls must stay non-interactive.
 
 Job commands are intentionally narrow:
 

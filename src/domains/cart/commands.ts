@@ -1,11 +1,11 @@
 import { Command } from 'commander';
 import { SessionStore } from '../../auth/session.js';
 import type { GlobalOptions } from '../../auth/commands.js';
-import { BmallCliError } from '../../core/errors.js';
 import { ConfigManager } from '../../core/config.js';
 import { BmallHttpClient, type BmallRequestOptions } from '../../core/http.js';
 import { success } from '../../core/output.js';
 import { dryRun } from '../../core/dry-run.js';
+import { authorizeWriteGate } from '../ops/safety.js';
 
 type ClientLike = { send<T = unknown>(opts: BmallRequestOptions): Promise<{ data?: T; requestId: string; durationMs: number }> };
 type OutputFn = (payload: unknown) => void;
@@ -33,7 +33,10 @@ export function registerCartCommands(program: Command, getGlobals: () => GlobalO
       output(dryRun(endpoints.add, { skuCode: opts.skuCode, qty: Number(opts.qty), companyId: opts.companyId }));
       return;
     }
-    requireConfirmReason(opts, 'Cart add');
+    await authorizeWriteGate(opts, 'write', {
+      command: 'cart.add',
+      summary: `加购 SKU ${String(opts.skuCode)}，数量 ${String(opts.qty)}${opts.companyId ? `，公司 ${String(opts.companyId)}` : ''}。`,
+    });
     await callApi(getGlobals(), output, deps, endpoints.add, {
       skuCode: opts.skuCode,
       qty: Number(opts.qty),
@@ -46,7 +49,10 @@ export function registerCartCommands(program: Command, getGlobals: () => GlobalO
       output(dryRun(endpoints.remove, { skuCode: opts.skuCode, companyId: opts.companyId }));
       return;
     }
-    requireConfirmReason(opts, 'Cart remove');
+    await authorizeWriteGate(opts, 'destructive', {
+      command: 'cart.remove',
+      summary: `移除购物车 SKU ${String(opts.skuCode)}${opts.companyId ? `，公司 ${String(opts.companyId)}` : ''}。`,
+    });
     await callApi(getGlobals(), output, deps, endpoints.remove, {
       skuCode: opts.skuCode,
       companyId: opts.companyId,
@@ -58,7 +64,10 @@ export function registerCartCommands(program: Command, getGlobals: () => GlobalO
       output(dryRun(endpoints.clear, { companyId: opts.companyId }));
       return;
     }
-    requireConfirmReason(opts, 'Cart clear');
+    await authorizeWriteGate(opts, 'destructive', {
+      command: 'cart.clear',
+      summary: `清空购物车${opts.companyId ? `，公司 ${String(opts.companyId)}` : ''}。`,
+    });
     await callApi(getGlobals(), output, deps, endpoints.clear, {
       companyId: opts.companyId,
       reason: opts.reason
@@ -79,14 +88,6 @@ async function callApi(globals: GlobalOptions, output: OutputFn, deps: CartComma
     auth: { injectAuthToBody: true }
   });
   output(success({ ...resolved, requestId: response.requestId }, response.data, { source: 'api', durationMs: response.durationMs }));
-}
-
-function requireConfirmReason(opts: { confirm?: boolean; reason?: string }, action: string): void {
-  if (!opts.confirm || !opts.reason) {
-    throw new BmallCliError('INPUT_ERROR', `${action} requires --confirm and --reason`, {
-      recover: 'Read with `cart list` first. Only execute mutations when the confirm/reason policy is complete.'
-    });
-  }
 }
 
 function withCompany(body: Record<string, unknown>, defaultCompanyId?: string): Record<string, unknown> {

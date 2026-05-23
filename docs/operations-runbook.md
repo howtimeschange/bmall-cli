@@ -206,7 +206,7 @@ bmall ops job list --module order --json
 `orderDailyStatJob` 当前只是待审批候选，默认禁用。运行 job 必须满足：
 
 - 该 job 在 `manifests/job-allowlist.json` 中启用。
-- 命令带 `--dry-run` 预演，或带 `--confirm --reason` 真实执行。
+- 命令带 `--dry-run` 预演，或带 `--confirm --reason` 真实执行；人工终端操作也可以走 CLI 二次确认，输入 `yes` 并填写授权理由。
 - CLI 只使用 allowlist 固定的 target object、method 和参数。
 
 CLI 绝不接受命令参数传入任意 `targetObject`、`targetMethod` 或 `schedule/dowork`。没有真实后端 facade 时，实际 `job run` 会失败，而不是返回合成成功。

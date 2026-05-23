@@ -1,5 +1,8 @@
 import { dryRun } from "../../core/dry-run.js";
 import { writeAudit } from "../../core/audit.js";
+import { createInterface } from "node:readline/promises";
+import { stdin as defaultInput, stderr as defaultOutput } from "node:process";
+import type { Readable, Writable } from "node:stream";
 
 export type AccessLevel = "read" | "write" | "destructive" | "financial";
 
@@ -7,6 +10,16 @@ export interface WriteGateOptions {
   dryRun?: boolean;
   confirm?: boolean;
   reason?: string;
+  json?: boolean;
+}
+
+export interface InteractiveWriteGateOptions {
+  command: string;
+  summary?: string;
+  question?: (prompt: string) => Promise<string>;
+  interactive?: boolean;
+  input?: Readable;
+  output?: Writable;
 }
 
 export interface AuditContext {
@@ -36,6 +49,74 @@ export function assertWriteGate(options: WriteGateOptions, access: AccessLevel =
   if (!String(options.reason ?? "").trim()) {
     throw new Error("WRITE_REQUIRES_REASON");
   }
+}
+
+export async function authorizeWriteGate(
+  options: WriteGateOptions,
+  access: AccessLevel = "write",
+  promptOptions: InteractiveWriteGateOptions,
+): Promise<void> {
+  if (access === "read" || options.dryRun || (options.confirm && String(options.reason ?? "").trim())) {
+    assertWriteGate(options, access);
+    return;
+  }
+
+  if (options.confirm && !String(options.reason ?? "").trim()) {
+    assertWriteGate(options, access);
+    return;
+  }
+
+  if (!canPromptForAuthorization(options, promptOptions)) {
+    assertWriteGate(options, access);
+    return;
+  }
+
+  const ask = promptOptions.question ?? createTerminalQuestion(promptOptions.input, promptOptions.output);
+  try {
+    const summary = promptOptions.summary ? `\n影响: ${promptOptions.summary}` : "";
+    const answer = (await ask(
+      [
+        `\n即将执行需要用户授权的 ${access} 操作: ${promptOptions.command}`,
+        summary,
+        "这会修改 Bmall 业务数据。输入 yes 继续，其他任意输入取消: ",
+      ].filter(Boolean).join("\n"),
+    )).trim().toLowerCase();
+
+    if (answer !== "yes") {
+      throw new Error("WRITE_CONFIRMATION_CANCELLED");
+    }
+
+    const reason = (await ask("请输入本次授权理由: ")).trim();
+    if (!reason) {
+      throw new Error("WRITE_REQUIRES_REASON");
+    }
+
+    options.confirm = true;
+    options.reason = reason;
+    assertWriteGate(options, access);
+  } finally {
+    if ("close" in ask && typeof ask.close === "function") ask.close();
+  }
+}
+
+function canPromptForAuthorization(options: WriteGateOptions, promptOptions: InteractiveWriteGateOptions): boolean {
+  if (options.json) return false;
+  if (process.argv.includes("--json")) return false;
+  if (promptOptions.interactive !== undefined) return promptOptions.interactive;
+  const input = promptOptions.input ?? defaultInput;
+  const output = promptOptions.output ?? defaultOutput;
+  return Boolean(streamIsTty(input) && streamIsTty(output));
+}
+
+function streamIsTty(stream: Readable | Writable): boolean {
+  return "isTTY" in stream && stream.isTTY === true;
+}
+
+function createTerminalQuestion(input: Readable | undefined, output: Writable | undefined): ((prompt: string) => Promise<string>) & { close: () => void } {
+  const rl = createInterface({ input: input ?? defaultInput, output: output ?? defaultOutput });
+  const ask = ((prompt: string) => rl.question(prompt)) as ((prompt: string) => Promise<string>) & { close: () => void };
+  ask.close = () => rl.close();
+  return ask;
 }
 
 export function redactValue(key: string, value: unknown): unknown {

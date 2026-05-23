@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { assertWriteGate, auditOperation, dryRunPlan, type WriteGateOptions } from "./safety.js";
+import { authorizeWriteGate, auditOperation, dryRunPlan, type WriteGateOptions } from "./safety.js";
 
 type ApiClient = { request: (method: string, path: string, body?: unknown) => Promise<unknown> };
 type OutputFn = (payload: unknown) => void;
@@ -277,6 +277,10 @@ async function runAddressSave(
   configHome: string | (() => string | undefined) | undefined,
   affected = 1,
 ) {
+  await authorizeWriteGate(options, access, {
+    command,
+    summary: `保存公司 ${String(payload.companyId)} 的收货地址列表，影响 ${affected} 条地址。`,
+  });
   if (options.dryRun) {
     const result = dryRunPlan(command, affected, [{ method: "POST", endpoint: ADDRESS_SAVE_ENDPOINT, body: payload }]);
     await auditOperation({ command, access, args: payload, configHome: typeof configHome === "function" ? configHome() : configHome }, "dry-run");
@@ -325,7 +329,6 @@ export function registerOpsAddressCommands(program: CommandLike, client?: ApiCli
     .option("--reason <reason>")
     .option("--json")
     .action(async (options: WriteGateOptions & Record<string, unknown>) => {
-      assertWriteGate(options, "write");
       const companyId = String(options.companyId);
       const addressId = String(options.addressId);
       const addresses = await fetchAddressList(client, companyId);
@@ -352,7 +355,6 @@ export function registerOpsAddressCommands(program: CommandLike, client?: ApiCli
     .option("--reason <reason>")
     .option("--json")
     .action(async (options: WriteGateOptions & Record<string, unknown>) => {
-      assertWriteGate(options, "write");
       const companyId = String(options.companyId);
       const addresses = await fetchAddressList(client, companyId);
       const payload = buildAddressCreatePayload(addresses, { companyId, address: pickRequiredAddress(options) });
@@ -379,7 +381,6 @@ export function registerOpsAddressCommands(program: CommandLike, client?: ApiCli
     .option("--reason <reason>")
     .option("--json")
     .action(async (options: WriteGateOptions & Record<string, unknown>) => {
-      assertWriteGate(options, "write");
       const companyId = String(options.companyId);
       const addressId = String(options.addressId);
       const addresses = await fetchAddressList(client, companyId);
@@ -396,7 +397,6 @@ export function registerOpsAddressCommands(program: CommandLike, client?: ApiCli
     .option("--reason <reason>")
     .option("--json")
     .action(async (options: WriteGateOptions & Record<string, unknown>) => {
-      assertWriteGate(options, "write");
       const companyId = String(options.companyId);
       const addressId = String(options.addressId);
       const addresses = await fetchAddressList(client, companyId);
@@ -413,7 +413,6 @@ export function registerOpsAddressCommands(program: CommandLike, client?: ApiCli
     .option("--reason <reason>")
     .option("--json")
     .action(async (options: WriteGateOptions & Record<string, unknown>) => {
-      assertWriteGate(options, "destructive");
       const companyId = String(options.companyId);
       const addressId = String(options.addressId);
       const addresses = await fetchAddressList(client, companyId);

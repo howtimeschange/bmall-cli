@@ -1,4 +1,4 @@
-import { assertWriteGate, auditOperation, dryRunPlan, type WriteGateOptions } from "./safety.js";
+import { authorizeWriteGate, auditOperation, dryRunPlan, type WriteGateOptions } from "./safety.js";
 import { diagnoseProductLaunch, setupProductLaunch } from "./product-launch.js";
 
 export interface ProductWriteOptions extends WriteGateOptions {
@@ -57,7 +57,10 @@ function requireClient(client: ApiClient | undefined, command: string): ApiClien
 }
 
 export async function productWritePlan(command: string, options: ProductWriteOptions, endpoint = command) {
-  assertWriteGate(options, "write");
+  await authorizeWriteGate(options, "write", {
+    command: `ops.${command.replaceAll("/", ".")}`,
+    summary: productWriteSummary(command, options),
+  });
   const result = dryRunPlan(command, options.input ? 1 : 0, [
     { method: "POST", endpoint, input: options.input ?? null, itemCode: options.itemCode ?? null },
   ]);
@@ -66,7 +69,10 @@ export async function productWritePlan(command: string, options: ProductWriteOpt
 }
 
 async function runProductWrite(command: string, endpoint: string, options: ProductWriteOptions, client?: ApiClient) {
-  assertWriteGate(options, "write");
+  await authorizeWriteGate(options, "write", {
+    command: `ops.${command.replaceAll("/", ".")}`,
+    summary: productWriteSummary(command, options),
+  });
   if (options.dryRun) return productWritePlan(command, options, endpoint);
   const body = Object.fromEntries(Object.entries(options).filter(([key, value]) => !["dryRun", "confirm", "reason", "json"].includes(key) && value !== undefined && value !== ""));
   const result = await requireClient(client, command).request("POST", endpoint, body);
@@ -75,7 +81,6 @@ async function runProductWrite(command: string, endpoint: string, options: Produ
 }
 
 export async function addProductApplication(client: ApiClient, options: ProductApplyAddOptions) {
-  assertWriteGate(options, "write");
   const itemCode = String(options.itemCode ?? "").trim();
   if (!itemCode) throw new Error("PRODUCT_APPLY_ADD_REQUIRES_ITEM_CODE");
 
@@ -84,6 +89,10 @@ export async function addProductApplication(client: ApiClient, options: ProductA
   const item = await resolveBrandItem(client, itemCode);
   const existing = await findExistingApplication(client, item, company);
   const payload = { taskType: "add", companyIds: [company.companyId], itemIds: [item.itemId] };
+  await authorizeWriteGate(options, "write", {
+    command: "ops.product.apply.add",
+    summary: `给公司 ${company.companyId} 添加商品应用 ${itemCode}。`,
+  });
   const baseResult = {
     command: "product/apply/add",
     item,
@@ -137,6 +146,12 @@ export async function addProductApplication(client: ApiClient, options: ProductA
     "ok",
   );
   return { ok: true, mode: "applied", affected: 1, ...baseResult, result };
+}
+
+function productWriteSummary(command: string, options: ProductWriteOptions): string {
+  if (options.itemCode) return `${command} 将处理商品 ${options.itemCode}。`;
+  if (options.input) return `${command} 将按文件 ${options.input} 执行批量写操作。`;
+  return `${command} 将修改商品相关业务数据。`;
 }
 
 export function registerOpsProductCommands(program: CommandLike, client?: ApiClient, output?: OutputFn) {

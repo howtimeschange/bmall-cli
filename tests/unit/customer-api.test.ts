@@ -89,7 +89,7 @@ describe('customer API commands', () => {
     const { configHome, program, calls } = await createHarness();
     await expect(
       program.parseAsync(['node', 'bmall', '--config-home', configHome, '--profile', 'unit', '--env', 'local', '--json', 'cart', 'add', '--sku-code', 'SKU001', '--qty', '1'])
-    ).rejects.toThrow('Cart add requires --confirm and --reason');
+    ).rejects.toThrow('WRITE_REQUIRES_DRY_RUN_OR_CONFIRM');
     expect(calls).toHaveLength(0);
   });
 

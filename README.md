@@ -207,8 +207,9 @@ node docs/source-knowledge/scripts/extract-source-knowledge.mjs
 | 只读查询 | 搜索、查看、诊断、导出任务查询。 | 不需要额外授权，但仍需有效登录态和权限。 |
 | `--dry-run` | 只预演将要调用的接口、payload、影响对象，不改变业务状态。 | 不执行真实写入，可用于给用户确认。 |
 | `--confirm --reason "<授权原因>"` | 执行真实写操作。 | 必须由用户明确授权，并在 `reason` 中记录授权理由。 |
+| 交互式确认 | 人工在终端执行写命令且未加 `--json` 时，CLI 会显示命令和影响范围，要求输入 `yes` 和授权理由。 | 类似 UI 二次确认；适合现场人工操作。 |
 
-如果缺少 `--confirm --reason`，新增、修改、取消、审核、提交订单等写操作会被 CLI 拦截。
+非交互、脚本或 `--json` 场景不会弹出确认问题；如果缺少 `--confirm --reason`，新增、修改、取消、审核、提交订单等写操作会被 CLI 拦截。
 
 ## 能力地图
 
@@ -342,7 +343,7 @@ bmall ops address patch --company-id <COMPANY_ID> --address-id <ADDRESS_ID> --re
 - 不记录 token、password、cookie、完整手机号、身份证号或 authorization header。
 - 本地审计记录写入 `~/.bmall-cli/audit/YYYY-MM-DD.jsonl`。
 - 业务命令不通过浏览器自动化执行。
-- 订单提交、审核、地址 patch、商品应用更新、job run 等写操作必须先获得用户授权，并经过 `--dry-run` 预演或使用 `--confirm --reason` 真实执行。
+- 订单提交、审核、地址 patch、商品应用更新、job run 等写操作必须先获得用户授权，并经过 `--dry-run` 预演，再使用 `--confirm --reason` 或终端交互式二次确认真实执行。
 - 通用 `schedule/dowork` 被禁止；job 只能走 `manifests/job-allowlist.json`。
 - 没有确认安全 API 的页面专属流程会返回 `*_REQUIRES_BACKEND_FACADE` 或 unsupported，不会返回假成功。
 

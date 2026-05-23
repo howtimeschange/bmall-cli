@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { describe, expect, it } from 'vitest';
 import { Command } from 'commander';
-import { assertWriteGate } from '../../src/domains/ops/safety.js';
+import { assertWriteGate, authorizeWriteGate } from '../../src/domains/ops/safety.js';
 import { registerJobCommands } from '../../src/domains/job/commands.js';
 import { registerPendingOrderCommands } from '../../src/domains/pending-order/commands.js';
 import { registerOrderCommands } from '../../src/domains/order/commands.js';
@@ -16,6 +16,37 @@ describe('write safety gates', () => {
     expect(() => assertWriteGate({}, 'financial')).toThrow('FINANCIAL_REQUIRES_DRY_RUN_OR_CONFIRM');
     expect(() => assertWriteGate({ confirm: true }, 'financial')).toThrow('WRITE_REQUIRES_REASON');
     expect(() => assertWriteGate({ confirm: true, reason: 'customer authorized submit' }, 'financial')).not.toThrow();
+  });
+
+  it('can collect interactive write authorization and reason', async () => {
+    const options: { confirm?: boolean; reason?: string } = {};
+    const prompts: string[] = [];
+    const answers = ['yes', '同步门店主数据'];
+
+    await authorizeWriteGate(options, 'write', {
+      command: 'ops.store.mdm.confirm',
+      summary: '确认 1 个门店 MDM 暂存记录到业务档案',
+      interactive: true,
+      question: async (prompt) => {
+        prompts.push(prompt);
+        return answers.shift() ?? '';
+      },
+    });
+
+    expect(options).toMatchObject({ confirm: true, reason: '同步门店主数据' });
+    expect(prompts.join('\n')).toContain('ops.store.mdm.confirm');
+    expect(prompts.join('\n')).toContain('确认 1 个门店 MDM 暂存记录到业务档案');
+  });
+
+  it('keeps stable non-interactive errors without prompting', async () => {
+    await expect(
+      authorizeWriteGate({ json: true }, 'financial', {
+        command: 'order.submit',
+        question: async () => {
+          throw new Error('SHOULD_NOT_PROMPT');
+        },
+      }),
+    ).rejects.toThrow('FINANCIAL_REQUIRES_DRY_RUN_OR_CONFIRM');
   });
 
   it('audits job run dry-runs with redacted fixed params', async () => {

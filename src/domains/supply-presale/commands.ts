@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { SupplyPresaleAdapter } from '../order/adapters/supply-presale.js';
 import type { GlobalOptions } from '../../auth/commands.js';
-import { assertWriteGate, auditOperation } from '../ops/safety.js';
+import { authorizeWriteGate, auditOperation } from '../ops/safety.js';
 import { callBmallApi, callBmallApiSequence, cleanOptionsBody, dryRunSequence, type DomainCommandDeps, type OutputFn } from '../common/api.js';
 
 export function registerSupplyPresaleCommands(
@@ -19,8 +19,11 @@ export function registerSupplyPresaleCommands(
   cmd.command('items').option('--activity-id <activityId>').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.items, cleanOptionsBody(opts)));
   cmd.command('cart').option('--activity-id <activityId>').option('--company-id <companyId>').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.cart, cleanOptionsBody(opts)));
   cmd.command('add').requiredOption('--activity-id <activityId>').requiredOption('--sku-code <skuCode>').requiredOption('--qty <qty>').option('--dry-run').option('--confirm').option('--reason <reason>').option('--json').action(async (opts) => {
-    assertWriteGate(opts, 'write');
     const body = cleanOptionsBody(opts, { qty: Number(opts.qty) });
+    await authorizeWriteGate(opts, 'write', {
+      command: 'supply-presale.add',
+      summary: `柔供预售活动 ${String(opts.activityId)} 加购 SKU ${String(opts.skuCode)}，数量 ${String(opts.qty)}。`,
+    });
     if (opts.dryRun) {
       await auditOperation({ command: 'supply-presale.add', access: 'write', args: body, configHome: requireGlobals(getGlobals).configHome }, 'dry-run');
       output(dryRunSequence('supply-presale.add', [{ name: 'add', path: adapter.endpoints.add }], body));
@@ -35,13 +38,16 @@ export function registerSupplyPresaleCommands(
     { name: 'applyMultiple', path: adapter.endpoints.applyMultiple },
   ], cleanOptionsBody(opts)));
   cmd.command('submit').option('--activity-id <activityId>').option('--company-id <companyId>').option('--dry-run').option('--confirm').option('--reason <reason>').option('--json').action(async (opts) => {
-    assertWriteGate(opts, 'financial');
     const body = cleanOptionsBody(opts);
     const steps = [
       { name: 'checkItems', path: adapter.endpoints.validate },
       { name: 'canSubmitItems', path: adapter.endpoints.canSubmitItems },
       { name: 'submit', path: adapter.endpoints.submit },
     ];
+    await authorizeWriteGate(opts, 'financial', {
+      command: 'supply-presale.submit',
+      summary: `提交柔供预售订单${opts.activityId ? `，活动 ${String(opts.activityId)}` : ''}${opts.companyId ? `，公司 ${String(opts.companyId)}` : ''}。`,
+    });
     if (opts.dryRun) {
       await auditOperation({ command: 'supply-presale.submit', access: 'financial', args: body, configHome: requireGlobals(getGlobals).configHome }, 'dry-run');
       output(dryRunSequence('supply-presale.submit', steps, body));
@@ -51,8 +57,11 @@ export function registerSupplyPresaleCommands(
     await auditOperation({ command: 'supply-presale.submit', access: 'financial', args: body, configHome: requireGlobals(getGlobals).configHome }, 'ok');
   });
   cmd.command('cancel').requiredOption('--order-id <orderId>').option('--dry-run').option('--confirm').option('--reason <reason>').option('--json').action(async (opts) => {
-    assertWriteGate(opts, 'destructive');
     const body = cleanOptionsBody(opts);
+    await authorizeWriteGate(opts, 'destructive', {
+      command: 'supply-presale.cancel',
+      summary: `取消柔供预售订单 ${String(opts.orderId)}。`,
+    });
     if (opts.dryRun) {
       await auditOperation({ command: 'supply-presale.cancel', access: 'destructive', args: body, configHome: requireGlobals(getGlobals).configHome }, 'dry-run');
       output(dryRunSequence('supply-presale.cancel', [{ name: 'cancel', path: adapter.endpoints.cancel }], body));

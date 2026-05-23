@@ -1,4 +1,4 @@
-import { assertWriteGate, auditOperation, dryRunPlan, type WriteGateOptions } from "./safety.js";
+import { authorizeWriteGate, auditOperation, dryRunPlan, type WriteGateOptions } from "./safety.js";
 
 type ApiClient = { request: (method: string, path: string, body?: unknown) => Promise<unknown> };
 type CommandLike = {
@@ -58,6 +58,15 @@ function requireMdmConfirmTarget(syncAll: unknown, codes: unknown[] | undefined,
   throw new Error(error);
 }
 
+function writeSummary(command: string, body: Record<string, unknown>): string {
+  if (Array.isArray(body.companyCodes)) return `${command} 将处理 ${body.companyCodes.length} 个门店编码。`;
+  if (Array.isArray(body.distributorCodes)) return `${command} 将处理 ${body.distributorCodes.length} 个经销商编码。`;
+  if (body.syncAll === true) return `${command} 将确认全部 MDM 暂存记录。`;
+  if (body.startTime && body.endTime) return `${command} 将处理 ${String(body.startTime)} 到 ${String(body.endTime)} 的 MDM 更新。`;
+  if (body.key) return `${command} 将修改配置 ${String(body.key)}。`;
+  return `${command} 将修改 Bmall 业务数据。`;
+}
+
 async function runWriteEndpoint(
   client: ApiClient | undefined,
   output: OutputFn | undefined,
@@ -66,8 +75,11 @@ async function runWriteEndpoint(
   options: WriteGateOptions & Record<string, unknown>,
   body: Record<string, unknown>,
 ) {
-  assertWriteGate(options, "write");
   const clean = cleanBody(body);
+  await authorizeWriteGate(options, "write", {
+    command,
+    summary: writeSummary(command, clean),
+  });
   if (options.dryRun) {
     const result = dryRunPlan(command, Array.isArray(clean.companyCodes) ? clean.companyCodes.length : Array.isArray(clean.distributorCodes) ? clean.distributorCodes.length : 1, [
       { method: "POST", endpoint, body: clean },
@@ -170,7 +182,10 @@ export function registerOpsMiscCommands(program: CommandLike, client?: ApiClient
     throw new Error("CONFIG_GET_REQUIRES_BACKEND_FACADE");
   });
   config.command("set").requiredOption("--key <key>").requiredOption("--value <value>").option("--dry-run").option("--confirm").option("--reason <reason>").option("--json").action(async (options) => {
-    assertWriteGate(options, "write");
+    await authorizeWriteGate(options, "write", {
+      command: "ops.config.set",
+      summary: `修改配置 ${String(options.key)}。`,
+    });
     if (!options.dryRun) throw new Error("CONFIG_SET_REQUIRES_BACKEND_FACADE");
     const result = { ok: true, mode: "dry-run", command: "config set", target: options.key, blocked: true, message: "No safe existing configuration facade has been mapped for CLI writes." };
     await auditOperation({ command: "ops.config.set", access: "write", args: options }, options.dryRun ? "dry-run" : "ok");
