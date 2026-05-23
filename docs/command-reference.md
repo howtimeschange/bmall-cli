@@ -231,6 +231,17 @@ Update product application through product/mitemcomp/opt with write gate
 - Args: --input (required), --dry-run, --confirm, --reason
 - Columns: mode, apiCalls
 
+### ops.product.apply.add
+
+Add one product to a store product application through product/mitemcomp/opt with write gate
+
+- Audience: ops
+- Access: write
+- Auth: api-token
+- Browser: false
+- Args: --item-code (required), --company-id, --default-store, --dry-run, --confirm, --reason
+- Columns: mode, affected, item, company, apiCalls
+
 ### ops.product.group.list
 
 List product groups through product/item/group/list
@@ -274,6 +285,28 @@ Check B2B price list types through product/pricelist/b2b/types
 - Browser: false
 - Args: --item-code (required)
 - Columns: priceType, price
+
+### ops.product.launch-check
+
+Diagnose product launch readiness across master data, image, package item config, and store package application
+
+- Audience: ops
+- Access: read
+- Auth: api-token
+- Browser: false
+- Args: --item-code (required), --company-id, --company-code, --company-name
+- Columns: overallStatus, checks, blockingIssues, warnings, nextActions
+
+### ops.product.launch-setup
+
+Run the full batch product launch setup chain: MDM sync, image sync, package item config, and store package application
+
+- Audience: ops
+- Access: write
+- Auth: api-token
+- Browser: false
+- Args: --item-codes (required), --package-names (required), --company-codes (required), --merchant-ids, --sync-stock-logistics-pic, --dry-run, --confirm, --reason
+- Columns: mode, affected, itemCodes, packageNames, companyCodes, imageSyncTarget, apiCalls
 
 ### ops.product.image-sync
 

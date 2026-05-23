@@ -70,6 +70,23 @@ function buildApiClient(getGlobals: () => GlobalOptions) {
       });
       return success({ ...resolved, requestId: response.requestId }, response.data, { source: 'api', durationMs: response.durationMs });
     },
+    context: async () => {
+      const globals = getGlobals();
+      const resolved = await new ConfigManager(globals.configHome).resolve(globals);
+      const bundle = await new SessionStore(undefined, globals.configHome).require(resolved.profile);
+      return {
+        profile: resolved.profile,
+        env: resolved.env,
+        configHome: resolved.configHome,
+        companyId: resolved.profileConfig.companyId,
+        companyName: resolved.profileConfig.companyName,
+        groupId: bundle.groupId ?? resolved.profileConfig.groupId,
+        groupName: bundle.groupName,
+        groupCode: bundle.groupCode,
+        userId: bundle.userId,
+        userName: bundle.userName,
+      };
+    },
   };
 }
 

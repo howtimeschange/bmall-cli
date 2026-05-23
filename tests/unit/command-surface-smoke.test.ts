@@ -213,6 +213,7 @@ function valueForArg(name: string, type: string): string {
   if (name === 'base-url') return baseUrl;
   if (name === 'reason') return 'smoke authorization';
   if (name === 'token') return 'smoke-token';
+  if (name === 'merchant-ids') return '1162,23391';
   if (name === 'type') return 'replenishment';
   if (name === 'source') return 'supply';
   if (name === 'format') return 'json';
@@ -315,6 +316,19 @@ function responseFor(path: string, body: unknown): unknown {
   if (path.includes('pageGather')) return { total: 1 };
   if (path.includes('dealerPage') || path.includes('activityView/page')) return { content: [{ activityId: 'A001', companyCode: 'C001', orderQty: 1, pickedQty: 0 }] };
   if (path.includes('pendingReviewOrder') || path.includes('order/detailByNo')) return { data: { orderNo: 'DH001', companyId: 'C001', provinceName: '浙江省', cityName: '杭州市', regionName: '西湖区', conAddress: '文三路 1 号' } };
+  if (path === 'hr/sysCompany/queryCompanyInfoById') return { data: { companyId: 'C001', companyCode: 'C001', companyName: '西湖店' } };
+  if (path === 'product/item/brandItems/page') return { data: { content: [{ itemId: 'ITEM-ID-001', itemCode: 'ITEM001', itemName: '26Q2 T恤' }] } };
+  if (path === 'product/mitemcomp/list') return { data: { content: [] } };
+  if (path === 'product/mdm/mdmItemSyncByArticleCodes') return { ResultInt: 0, data: { synced: true } };
+  if (path === 'product/findShAccount') return { data: [{ merchantId: 1162, dpPlaceName: '默认深绘账号' }] };
+  if (path === 'product/itemPicAsyncByItemCode') return { data: { synced: true } };
+  if (path === 'product/pag/list') return { data: { content: [] } };
+  if (path === 'product/pag/save') return { data: 12345 };
+  if (path === 'product/pag/comp/batchAddOrDelCompany') return { data: { linked: true } };
+  if (path === 'product/pag/comp/getItemPackageAndComp') return { data: { packageList: [{ packageId: 'P001', packageCode: 'PKG001', packageName: '26Q2订货包' }], companyList: [] } };
+  if (path === 'product/pag/comp/list') return { data: [{ companyId: 'C001', companyCode: 'C001', companyName: '西湖店', packageVOList: [{ packageId: 'P001', packageCode: 'PKG001', packageName: '26Q2订货包' }] }] };
+  if (path === 'product/item/spec/getSpuDetailByItemId') return { data: { itemId: 'ITEM-ID-001', itemCode: 'ITEM001', itemName: '26Q2 T恤', headImage: 'https://img.example/ITEM001.jpg' } };
+  if (path === 'product/itemSearch/search') return { data: { records: [{ itemId: 'ITEM-ID-001', itemCode: 'ITEM001', itemName: '26Q2 T恤', headImage: 'https://img.example/ITEM001.jpg' }] } };
   if (path.includes('itemStock') || path.includes('item/page/syncStockSellOut')) return { data: { records: [{ itemCode: 'ITEM001', skuCode: 'SKU001', stockQty: 1 }] } };
   if (path.includes('item') || path.includes('product') || path.includes('shopping') || path.includes('order') || path.includes('activity') || path.includes('iam') || path.includes('sysCompany')) {
     return { data: { endpoint: path, echo: body } };

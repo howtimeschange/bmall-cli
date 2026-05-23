@@ -3313,6 +3313,50 @@
       "args": [
         {
           "name": "item-code",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "company-id",
+          "type": "str"
+        },
+        {
+          "name": "default-store",
+          "type": "bool"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "affected",
+        "item",
+        "company",
+        "apiCalls"
+      ],
+      "name": "ops.product.apply.add",
+      "description": "Add one product to a store product application through product/mitemcomp/opt with write gate",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-code",
           "type": "str"
         }
       ],
@@ -3385,6 +3429,98 @@
       "description": "Check B2B price list types through product/pricelist/b2b/types",
       "audience": "ops",
       "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-code",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "company-id",
+          "type": "str"
+        },
+        {
+          "name": "company-code",
+          "type": "str"
+        },
+        {
+          "name": "company-name",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "overallStatus",
+        "checks",
+        "blockingIssues",
+        "warnings",
+        "nextActions"
+      ],
+      "name": "ops.product.launch-check",
+      "description": "Diagnose product launch readiness across master data, image, package item config, and store package application",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "item-codes",
+          "type": "csv",
+          "required": true
+        },
+        {
+          "name": "package-names",
+          "type": "csv",
+          "required": true
+        },
+        {
+          "name": "company-codes",
+          "type": "csv",
+          "required": true
+        },
+        {
+          "name": "merchant-ids",
+          "type": "csv"
+        },
+        {
+          "name": "sync-stock-logistics-pic",
+          "type": "bool"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "affected",
+        "itemCodes",
+        "packageNames",
+        "companyCodes",
+        "imageSyncTarget",
+        "apiCalls"
+      ],
+      "name": "ops.product.launch-setup",
+      "description": "Run the full batch product launch setup chain: MDM sync, image sync, package item config, and store package application",
+      "audience": "ops",
+      "access": "write",
       "strategy": "api-token"
     },
     {
