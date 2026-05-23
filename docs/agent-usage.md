@@ -45,7 +45,7 @@ bmall ops product apply update --input apply-items.csv --dry-run --json
 bmall ops product apply update --input apply-items.csv --confirm --reason "approved product application change" --json
 ```
 
-Agents must treat every business-state mutation as user-authorized only. Do not execute create, update, delete, clear, cancel, cart mutation, order submit, pending-order review, pickup refusal, address patch, product application update, product import, image sync, or job run unless the user has explicitly approved the exact operation. Use `--dry-run` first, then execute the real command only with `--confirm --reason`.
+Agents must treat every business-state mutation as user-authorized only. Do not execute create, update, delete, clear, cancel, cart mutation, order submit, pending-order review, pickup refusal, address create/update/patch/delete/default, MDM sync confirm/sync-by-* commands, product application update, product import, image sync, or job run unless the user has explicitly approved the exact operation. Use `--dry-run` first, then execute the real command only with `--confirm --reason`.
 
 Job commands are intentionally narrow:
 
@@ -90,6 +90,20 @@ bmall ops address patch --company-id <COMPANY_ID> --address-id <ADDRESS_ID> --re
 ```
 
 MDM 来源地址不要直接改，走门店主数据修正和同步。
+
+MDM 主数据同步先看中间表和 diff，再确认写入档案：
+
+```bash
+bmall ops store mdm page --store-code <STORE_CODE> --json
+bmall ops store mdm diff --company-code <STORE_CODE> --json
+bmall ops store mdm confirm --company-codes <STORE_CODE> --dry-run --json
+
+bmall ops retailer mdm page --retailer-code <RETAILER_CODE> --json
+bmall ops retailer mdm diff --distributor-code <RETAILER_CODE> --json
+bmall ops retailer mdm confirm --distributor-codes <RETAILER_CODE> --dry-run --json
+```
+
+真实 `confirm` 或 `sync-by-*` 写操作必须使用 `--confirm --reason`。不要在没有编码列表或明确 `--sync-all` 的情况下确认同步。
 
 `ops config get/set`、`ops log api`、`ops log sync-warning` 当前只暴露为明确缺口：没有安全后端 facade 时会抛 `*_REQUIRES_BACKEND_FACADE`，不要把它们当成页面专属流程的替代命令。
 

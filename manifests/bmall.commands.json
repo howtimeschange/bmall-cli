@@ -2751,6 +2751,247 @@
       "browser": false,
       "args": [
         {
+          "name": "company-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "province-name",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "city-name",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "region-name",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "con-address",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "consignee",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "consi-phone",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "province-code",
+          "type": "str"
+        },
+        {
+          "name": "city-code",
+          "type": "str"
+        },
+        {
+          "name": "region-code",
+          "type": "str"
+        },
+        {
+          "name": "default",
+          "type": "bool"
+        },
+        {
+          "name": "file",
+          "type": "path"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.address.create",
+      "description": "Create a manual store receiving address through hr/mb2bcrd3/saveOrUpdate",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "company-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "address-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "province-name",
+          "type": "str"
+        },
+        {
+          "name": "city-name",
+          "type": "str"
+        },
+        {
+          "name": "region-name",
+          "type": "str"
+        },
+        {
+          "name": "con-address",
+          "type": "str"
+        },
+        {
+          "name": "province-code",
+          "type": "str"
+        },
+        {
+          "name": "city-code",
+          "type": "str"
+        },
+        {
+          "name": "region-code",
+          "type": "str"
+        },
+        {
+          "name": "consignee",
+          "type": "str"
+        },
+        {
+          "name": "consi-phone",
+          "type": "str"
+        },
+        {
+          "name": "default",
+          "type": "bool"
+        },
+        {
+          "name": "file",
+          "type": "path"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.address.update",
+      "description": "Edit a manual store receiving address through hr/mb2bcrd3/saveOrUpdate",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "company-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "address-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.address.set-default",
+      "description": "Set the default store receiving address while preserving other addresses",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "company-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "address-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.address.delete",
+      "description": "Delete a manual store receiving address by saving the remaining address list",
+      "audience": "ops",
+      "access": "destructive",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
           "name": "order-no",
           "type": "str"
         },
@@ -3292,6 +3533,171 @@
       "browser": false,
       "args": [
         {
+          "name": "company-codes",
+          "type": "csv",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.store.mdm.sync-by-codes",
+      "description": "Pull store master data from MDM into the store staging table by store codes",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "from",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "to",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.store.mdm.sync-by-time",
+      "description": "Pull store master data from MDM into the store staging table by update time range",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "store-code",
+          "type": "str"
+        },
+        {
+          "name": "store-name",
+          "type": "str"
+        },
+        {
+          "name": "sync-status",
+          "type": "str"
+        },
+        {
+          "name": "page-index",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
+        }
+      ],
+      "columns": [
+        "storeCode",
+        "storeName",
+        "syncStatus"
+      ],
+      "name": "ops.store.mdm.page",
+      "description": "List store MDM staging records through hr/mdmStore/page",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "company-code",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "currentCompanyInfo",
+        "mdmCompanyInfo"
+      ],
+      "name": "ops.store.mdm.diff",
+      "description": "Compare one store code between current store profile and MDM staging data",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "company-codes",
+          "type": "csv"
+        },
+        {
+          "name": "sync-all",
+          "type": "bool"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.store.mdm.confirm",
+      "description": "Confirm selected or all store MDM staging records into store profiles",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
           "name": "distributor-id",
           "type": "str"
         },
@@ -3316,6 +3722,171 @@
       "description": "Query retailer/distributor role page through hr/sysCompany/queryDistributorRole/middleGround",
       "audience": "ops",
       "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "distributor-codes",
+          "type": "csv",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.retailer.mdm.sync-by-codes",
+      "description": "Pull retailer master data from MDM into the retailer staging table by retailer codes",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "from",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "to",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.retailer.mdm.sync-by-time",
+      "description": "Pull retailer master data from MDM into the retailer staging table by update time range",
+      "audience": "ops",
+      "access": "write",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "retailer-code",
+          "type": "str"
+        },
+        {
+          "name": "retailer-name",
+          "type": "str"
+        },
+        {
+          "name": "sync-status",
+          "type": "str"
+        },
+        {
+          "name": "page-index",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
+        }
+      ],
+      "columns": [
+        "retailerCode",
+        "retailerName",
+        "syncStatus"
+      ],
+      "name": "ops.retailer.mdm.page",
+      "description": "List retailer MDM staging records through hr/mdmRetailer/page",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "distributor-code",
+          "type": "str",
+          "required": true
+        }
+      ],
+      "columns": [
+        "currentDistributorInfo",
+        "mdmDistributorInfo"
+      ],
+      "name": "ops.retailer.mdm.diff",
+      "description": "Compare one retailer code between current retailer profile and MDM staging data",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "distributor-codes",
+          "type": "csv"
+        },
+        {
+          "name": "sync-all",
+          "type": "bool"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "mode",
+        "apiCalls"
+      ],
+      "name": "ops.retailer.mdm.confirm",
+      "description": "Confirm selected or all retailer MDM staging records into retailer profiles",
+      "audience": "ops",
+      "access": "write",
       "strategy": "api-token"
     },
     {

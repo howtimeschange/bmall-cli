@@ -1,4 +1,4 @@
-import { assertWriteGate, auditOperation } from "./safety.js";
+import { assertWriteGate, auditOperation, dryRunPlan, type WriteGateOptions } from "./safety.js";
 
 type ApiClient = { request: (method: string, path: string, body?: unknown) => Promise<unknown> };
 type CommandLike = {
@@ -28,6 +28,56 @@ function cleanBody(options: Record<string, unknown>, extra: Record<string, unkno
 
 function request(client: ApiClient | undefined, command: string, method: RequestMethod, path: string, body: Record<string, unknown>) {
   return requireClient(client, command).request(method, path, cleanBody(body));
+}
+
+function csvOption(value: unknown): string[] | undefined {
+  if (typeof value !== "string") return undefined;
+  const values = value.split(",").map((item) => item.trim()).filter(Boolean);
+  return values.length ? values : undefined;
+}
+
+function firstString(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return undefined;
+}
+
+function syncStatusList(value: unknown): string[] | undefined {
+  const text = firstString(value);
+  return text && text !== "all" ? [text] : undefined;
+}
+
+function syncStatusValue(value: unknown): string | undefined {
+  const text = firstString(value);
+  return text && text !== "all" ? text : undefined;
+}
+
+function requireMdmConfirmTarget(syncAll: unknown, codes: unknown[] | undefined, error: string): void {
+  if (syncAll === true || (Array.isArray(codes) && codes.length > 0)) return;
+  throw new Error(error);
+}
+
+async function runWriteEndpoint(
+  client: ApiClient | undefined,
+  output: OutputFn | undefined,
+  command: string,
+  endpoint: string,
+  options: WriteGateOptions & Record<string, unknown>,
+  body: Record<string, unknown>,
+) {
+  assertWriteGate(options, "write");
+  const clean = cleanBody(body);
+  if (options.dryRun) {
+    const result = dryRunPlan(command, Array.isArray(clean.companyCodes) ? clean.companyCodes.length : Array.isArray(clean.distributorCodes) ? clean.distributorCodes.length : 1, [
+      { method: "POST", endpoint, body: clean },
+    ]);
+    await auditOperation({ command, access: "write", args: clean }, "dry-run");
+    return emit(output, result);
+  }
+  const result = await requireClient(client, command).request("POST", endpoint, clean);
+  await auditOperation({ command, access: "write", args: clean }, "ok");
+  return emit(output, result);
 }
 
 function customerLookup(options: Record<string, unknown>) {
@@ -63,8 +113,47 @@ export function registerOpsMiscCommands(program: CommandLike, client?: ApiClient
     const lookup = customerLookup(options);
     return emit(output, await request(client, "customer get", lookup.method, lookup.path, lookup.body));
   });
-  ops.command("store").description("Store operations commands").command("get").requiredOption("--company-id <companyId>").option("--json").action(async (options) => emit(output, await request(client, "store get", "GET", "hr/sysCompany/queryCompanyInfoById", { companyId: options.companyId })));
-  ops.command("retailer").description("Retailer operations commands").command("get").option("--distributor-id <distributorId>").option("--sword <sword>").option("--page-index <pageIndex>").option("--page-size <pageSize>").option("--json").action(async (options) => emit(output, await request(client, "retailer get", "POST", "hr/sysCompany/queryDistributorRole/middleGround", { distributorId: options.distributorId, sword: options.sword, pageIndex: Number(options.pageIndex ?? 1), pageSize: Number(options.pageSize ?? 20) })));
+  const store = ops.command("store").description("Store operations commands");
+  store.command("get").requiredOption("--company-id <companyId>").option("--json").action(async (options) => emit(output, await request(client, "store get", "GET", "hr/sysCompany/queryCompanyInfoById", { companyId: options.companyId })));
+  const storeMdm = store.command("mdm").description("Store master-data sync commands");
+  storeMdm.command("sync-by-codes").requiredOption("--company-codes <companyCodes>").option("--dry-run").option("--confirm").option("--reason <reason>").option("--json").action(async (options) => {
+    return runWriteEndpoint(client, output, "ops.store.mdm.sync-by-codes", "hr/syscompany/v2/syncByCodes", options, { companyCodes: csvOption(options.companyCodes) });
+  });
+  storeMdm.command("sync-by-time").requiredOption("--from <from>").requiredOption("--to <to>").option("--dry-run").option("--confirm").option("--reason <reason>").option("--json").action(async (options) => {
+    return runWriteEndpoint(client, output, "ops.store.mdm.sync-by-time", "hr/syscompany/v2/syncByTime", options, { startTime: options.from, endTime: options.to });
+  });
+  storeMdm.command("page").option("--store-code <storeCode>").option("--store-name <storeName>").option("--sync-status <syncStatus>").option("--page-index <pageIndex>").option("--page-size <pageSize>").option("--json").action(async (options) => {
+    return emit(output, await request(client, "store mdm page", "POST", "hr/mdmStore/page", { companyCode: options.storeCode, companyName: options.storeName, syncStatus: syncStatusList(options.syncStatus), searchType: 1, pageIndex: Number(options.pageIndex ?? 1), pageSize: Number(options.pageSize ?? 20) }));
+  });
+  storeMdm.command("diff").requiredOption("--company-code <companyCode>").option("--json").action(async (options) => {
+    return emit(output, await request(client, "store mdm diff", "POST", "hr/syscompany/v2/selectAndSyncByCodes", { companyCode: options.companyCode }));
+  });
+  storeMdm.command("confirm").option("--company-codes <companyCodes>").option("--sync-all").option("--dry-run").option("--confirm").option("--reason <reason>").option("--json").action(async (options) => {
+    const companyCodes = csvOption(options.companyCodes);
+    requireMdmConfirmTarget(options.syncAll, companyCodes, "STORE_MDM_CONFIRM_REQUIRES_COMPANY_CODES_OR_SYNC_ALL");
+    return runWriteEndpoint(client, output, "ops.store.mdm.confirm", "hr/syscompany/v2/syncFromMdmStore", options, { syncAll: options.syncAll === true, companyCodes });
+  });
+
+  const retailer = ops.command("retailer").description("Retailer operations commands");
+  retailer.command("get").option("--distributor-id <distributorId>").option("--sword <sword>").option("--page-index <pageIndex>").option("--page-size <pageSize>").option("--json").action(async (options) => emit(output, await request(client, "retailer get", "POST", "hr/sysCompany/queryDistributorRole/middleGround", { distributorId: options.distributorId, sword: options.sword, pageIndex: Number(options.pageIndex ?? 1), pageSize: Number(options.pageSize ?? 20) })));
+  const retailerMdm = retailer.command("mdm").description("Retailer master-data sync commands");
+  retailerMdm.command("sync-by-codes").requiredOption("--distributor-codes <distributorCodes>").option("--dry-run").option("--confirm").option("--reason <reason>").option("--json").action(async (options) => {
+    return runWriteEndpoint(client, output, "ops.retailer.mdm.sync-by-codes", "hr/distributor/v2/syncByCodes", options, { distributorCodes: csvOption(options.distributorCodes) });
+  });
+  retailerMdm.command("sync-by-time").requiredOption("--from <from>").requiredOption("--to <to>").option("--dry-run").option("--confirm").option("--reason <reason>").option("--json").action(async (options) => {
+    return runWriteEndpoint(client, output, "ops.retailer.mdm.sync-by-time", "hr/distributor/v2/syncByTime", options, { startTime: options.from, endTime: options.to });
+  });
+  retailerMdm.command("page").option("--retailer-code <retailerCode>").option("--retailer-name <retailerName>").option("--sync-status <syncStatus>").option("--page-index <pageIndex>").option("--page-size <pageSize>").option("--json").action(async (options) => {
+    return emit(output, await request(client, "retailer mdm page", "POST", "hr/mdmRetailer/page", { distCode: options.retailerCode, distName: options.retailerName, syncStatus: syncStatusValue(options.syncStatus), pageIndex: Number(options.pageIndex ?? 1), pageSize: Number(options.pageSize ?? 20) }));
+  });
+  retailerMdm.command("diff").requiredOption("--distributor-code <distributorCode>").option("--json").action(async (options) => {
+    return emit(output, await request(client, "retailer mdm diff", "POST", "hr/distributor/v2/selectAndSyncByCodes", { distributorCode: options.distributorCode }));
+  });
+  retailerMdm.command("confirm").option("--distributor-codes <distributorCodes>").option("--sync-all").option("--dry-run").option("--confirm").option("--reason <reason>").option("--json").action(async (options) => {
+    const distributorCodes = csvOption(firstString(options.distributorCodes, options.distributorCode));
+    requireMdmConfirmTarget(options.syncAll, distributorCodes, "RETAILER_MDM_CONFIRM_REQUIRES_DISTRIBUTOR_CODES_OR_SYNC_ALL");
+    return runWriteEndpoint(client, output, "ops.retailer.mdm.confirm", "hr/distributor/v2/syncFromMdmDistributor", options, { syncAll: options.syncAll === true, distributorCodes });
+  });
 
   const iam = ops.command("iam").description("IAM operations commands");
   iam.command("user").option("--user <user>").option("--id <id>").option("--page-index <pageIndex>").option("--page-size <pageSize>").option("--json").action(async (options) => {

@@ -82,6 +82,54 @@ bmall ops address patch \
 
 如果地址来自 MDM (`sourceType=2`)，不要用 CLI 直接 patch。应先修门店主数据，再触发主数据同步，让 Bmall 收到完整区县字段。
 
+门店档案里的收货地址维护走 `hr/mb2bcrd3/saveOrUpdate`，CLI 会先读取完整地址列表，再保存整页 `addressListReqs`，避免误删其他地址。新增、编辑、删除和设置默认地址都必须先 dry-run 或带确认理由：
+
+```bash
+bmall ops address create \
+  --company-id <COMPANY_ID> \
+  --province-name 浙江省 \
+  --city-name 杭州市 \
+  --region-name 西湖区 \
+  --con-address "文三路 1 号" \
+  --consignee 张三 \
+  --consi-phone 13800000000 \
+  --default \
+  --dry-run \
+  --json
+
+bmall ops address update --company-id <COMPANY_ID> --address-id <ADDRESS_ID> --con-address "文三路 2 号" --dry-run --json
+bmall ops address set-default --company-id <COMPANY_ID> --address-id <ADDRESS_ID> --dry-run --json
+bmall ops address delete --company-id <COMPANY_ID> --address-id <ADDRESS_ID> --dry-run --json
+```
+
+MDM 来源地址不允许直接编辑字段或删除；需要从主数据修正后同步。设置默认地址只重排 `isDefault`，可以用于 MDM 地址。
+
+## MDM 主数据同步
+
+门店档案“从 MDM 同步主数据”：
+
+```bash
+bmall ops store mdm sync-by-codes --company-codes S001,S002 --dry-run --json
+bmall ops store mdm sync-by-time --from 2026-05-01 --to 2026-05-24 --dry-run --json
+bmall ops store mdm page --store-code S001 --json
+bmall ops store mdm diff --company-code S001 --json
+bmall ops store mdm confirm --company-codes S001 --dry-run --json
+bmall ops store mdm confirm --company-codes S001 --confirm --reason "同步门店主数据" --json
+```
+
+零售档案“从 MDM 同步主数据”：
+
+```bash
+bmall ops retailer mdm sync-by-codes --distributor-codes R001,R002 --dry-run --json
+bmall ops retailer mdm sync-by-time --from 2026-05-01 --to 2026-05-24 --dry-run --json
+bmall ops retailer mdm page --retailer-code R001 --json
+bmall ops retailer mdm diff --distributor-code R001 --json
+bmall ops retailer mdm confirm --distributor-codes R001 --dry-run --json
+bmall ops retailer mdm confirm --distributor-codes R001 --confirm --reason "同步零售商主数据" --json
+```
+
+`confirm` 必须指定编码列表或 `--sync-all`。批量全量确认时更要先用 `page/diff` 抽样确认中间表内容，真实执行仍需要 `--confirm --reason`。
+
 ## 商品、库存和上下文
 
 只读命令：

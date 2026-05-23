@@ -44,6 +44,50 @@ Patch a manual receiving address by preserving the full address list and calling
 - Args: --company-id (required), --address-id (required), --province-name, --city-name, --region-name, --con-address, --province-code, --city-code, --region-code, --consignee, --consi-phone, --file, --dry-run, --confirm, --reason
 - Columns: mode, apiCalls
 
+### ops.address.create
+
+Create a manual store receiving address through hr/mb2bcrd3/saveOrUpdate
+
+- Audience: ops
+- Access: write
+- Auth: api-token
+- Browser: false
+- Args: --company-id (required), --province-name (required), --city-name (required), --region-name (required), --con-address (required), --consignee (required), --consi-phone (required), --province-code, --city-code, --region-code, --default, --file, --dry-run, --confirm, --reason
+- Columns: mode, apiCalls
+
+### ops.address.update
+
+Edit a manual store receiving address through hr/mb2bcrd3/saveOrUpdate
+
+- Audience: ops
+- Access: write
+- Auth: api-token
+- Browser: false
+- Args: --company-id (required), --address-id (required), --province-name, --city-name, --region-name, --con-address, --province-code, --city-code, --region-code, --consignee, --consi-phone, --default, --file, --dry-run, --confirm, --reason
+- Columns: mode, apiCalls
+
+### ops.address.set-default
+
+Set the default store receiving address while preserving other addresses
+
+- Audience: ops
+- Access: write
+- Auth: api-token
+- Browser: false
+- Args: --company-id (required), --address-id (required), --dry-run, --confirm, --reason
+- Columns: mode, apiCalls
+
+### ops.address.delete
+
+Delete a manual store receiving address by saving the remaining address list
+
+- Audience: ops
+- Access: destructive
+- Auth: api-token
+- Browser: false
+- Args: --company-id (required), --address-id (required), --dry-run, --confirm, --reason
+- Columns: mode, apiCalls
+
 ### ops.order.diagnose
 
 Diagnose an order using existing order detail APIs and local rule extraction
@@ -286,6 +330,61 @@ Read one store/company by companyId through hr/sysCompany/queryCompanyInfoById
 - Args: --company-id (required)
 - Columns: companyId, companyName
 
+### ops.store.mdm.sync-by-codes
+
+Pull store master data from MDM into the store staging table by store codes
+
+- Audience: ops
+- Access: write
+- Auth: api-token
+- Browser: false
+- Args: --company-codes (required), --dry-run, --confirm, --reason
+- Columns: mode, apiCalls
+
+### ops.store.mdm.sync-by-time
+
+Pull store master data from MDM into the store staging table by update time range
+
+- Audience: ops
+- Access: write
+- Auth: api-token
+- Browser: false
+- Args: --from (required), --to (required), --dry-run, --confirm, --reason
+- Columns: mode, apiCalls
+
+### ops.store.mdm.page
+
+List store MDM staging records through hr/mdmStore/page
+
+- Audience: ops
+- Access: read
+- Auth: api-token
+- Browser: false
+- Args: --store-code, --store-name, --sync-status, --page-index, --page-size
+- Columns: storeCode, storeName, syncStatus
+
+### ops.store.mdm.diff
+
+Compare one store code between current store profile and MDM staging data
+
+- Audience: ops
+- Access: read
+- Auth: api-token
+- Browser: false
+- Args: --company-code (required)
+- Columns: currentCompanyInfo, mdmCompanyInfo
+
+### ops.store.mdm.confirm
+
+Confirm selected or all store MDM staging records into store profiles
+
+- Audience: ops
+- Access: write
+- Auth: api-token
+- Browser: false
+- Args: --company-codes, --sync-all, --dry-run, --confirm, --reason
+- Columns: mode, apiCalls
+
 ### ops.retailer.get
 
 Query retailer/distributor role page through hr/sysCompany/queryDistributorRole/middleGround
@@ -296,6 +395,61 @@ Query retailer/distributor role page through hr/sysCompany/queryDistributorRole/
 - Browser: false
 - Args: --distributor-id, --sword, --page-index, --page-size
 - Columns: distributorId, companyName
+
+### ops.retailer.mdm.sync-by-codes
+
+Pull retailer master data from MDM into the retailer staging table by retailer codes
+
+- Audience: ops
+- Access: write
+- Auth: api-token
+- Browser: false
+- Args: --distributor-codes (required), --dry-run, --confirm, --reason
+- Columns: mode, apiCalls
+
+### ops.retailer.mdm.sync-by-time
+
+Pull retailer master data from MDM into the retailer staging table by update time range
+
+- Audience: ops
+- Access: write
+- Auth: api-token
+- Browser: false
+- Args: --from (required), --to (required), --dry-run, --confirm, --reason
+- Columns: mode, apiCalls
+
+### ops.retailer.mdm.page
+
+List retailer MDM staging records through hr/mdmRetailer/page
+
+- Audience: ops
+- Access: read
+- Auth: api-token
+- Browser: false
+- Args: --retailer-code, --retailer-name, --sync-status, --page-index, --page-size
+- Columns: retailerCode, retailerName, syncStatus
+
+### ops.retailer.mdm.diff
+
+Compare one retailer code between current retailer profile and MDM staging data
+
+- Audience: ops
+- Access: read
+- Auth: api-token
+- Browser: false
+- Args: --distributor-code (required)
+- Columns: currentDistributorInfo, mdmDistributorInfo
+
+### ops.retailer.mdm.confirm
+
+Confirm selected or all retailer MDM staging records into retailer profiles
+
+- Audience: ops
+- Access: write
+- Auth: api-token
+- Browser: false
+- Args: --distributor-codes, --sync-all, --dry-run, --confirm, --reason
+- Columns: mode, apiCalls
 
 ### ops.iam.user
 

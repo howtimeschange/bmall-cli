@@ -266,8 +266,15 @@ function valueForArg(name: string, type: string): string {
     consignee: '张三',
     'consi-phone': '13800000000',
     'company-code': 'C001',
+    'company-codes': 'C001,C002',
     'distributor-code': 'D001',
+    'distributor-codes': 'D001,D002',
     'distributor-name': '杭州经销商',
+    'store-code': 'C001',
+    'store-name': '西湖店',
+    'retailer-code': 'D001',
+    'retailer-name': '杭州经销商',
+    'sync-status': '1',
     'pickup-activity-status': 'all',
   };
   return values[name] ?? `${name}-value`;
