@@ -14,7 +14,8 @@ describe('write safety gates', () => {
     expect(() => assertWriteGate({ confirm: true }, 'write')).toThrow('WRITE_REQUIRES_REASON');
     expect(() => assertWriteGate({ confirm: true }, 'destructive')).toThrow('WRITE_REQUIRES_REASON');
     expect(() => assertWriteGate({}, 'financial')).toThrow('FINANCIAL_REQUIRES_DRY_RUN_OR_CONFIRM');
-    expect(() => assertWriteGate({ confirm: true }, 'financial')).not.toThrow();
+    expect(() => assertWriteGate({ confirm: true }, 'financial')).toThrow('WRITE_REQUIRES_REASON');
+    expect(() => assertWriteGate({ confirm: true, reason: 'customer authorized submit' }, 'financial')).not.toThrow();
   });
 
   it('audits job run dry-runs with redacted fixed params', async () => {
@@ -81,6 +82,18 @@ describe('write safety gates', () => {
 
     await expect(program.parseAsync(['node', 'bmall', 'order', 'submit', '--file', draftPath])).rejects.toThrow(
       'FINANCIAL_REQUIRES_DRY_RUN_OR_CONFIRM',
+    );
+  });
+
+  it('throws a stable error when CLI order submit has confirm but no reason', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'bmall-order-submit-reason-'));
+    const draftPath = join(dir, 'draft.json');
+    await writeFile(draftPath, JSON.stringify({ companyId: '20001', orderType: 'replenishment', items: [{ skuCode: 'SKU001', quantity: 1 }] }));
+    const program = new Command().exitOverride();
+    registerOrderCommands(program, () => undefined);
+
+    await expect(program.parseAsync(['node', 'bmall', 'order', 'submit', '--file', draftPath, '--confirm'])).rejects.toThrow(
+      'WRITE_REQUIRES_REASON',
     );
   });
 });

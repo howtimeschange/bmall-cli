@@ -8,7 +8,7 @@ Bmall CLI 是 Semir Reabam/Bmall 订货商城的 API-first 命令行客户端。
 
 | 你是谁 | Bmall CLI 能帮你做什么 | 推荐入口 |
 | --- | --- | --- |
-| 普通客户 | 搜商品、查 SKU 和库存、规划订单、校验规则、dry-run 下单。 | `product`、`stock`、`order`、`replenishment`、`pickup` |
+| 普通客户 | 搜商品、查 SKU 和库存、规划订单、校验规则，先 dry-run 预演，并在授权后真实下单。 | `product`、`stock`、`order`、`replenishment`、`pickup` |
 | 系统运维 | 切品牌/门店、查订单链路、排查待审核失败、维护地址、查商品主数据、轮询导出任务、运行 allowlist job。 | `company`、`ops order`、`ops address`、`ops product`、`ops export task`、`ops job` |
 | AI Agent | 读取 manifest 做能力规划，用 `--json` 拿稳定输出，根据错误码拿确定性排障剧本。 | `manifest`、`agent knowledge`、`agent explain-error` |
 
@@ -120,7 +120,7 @@ bmall order validate --file order.json --json
 bmall order submit --file order.json --dry-run --json
 ```
 
-真实提交订单属于财务写操作，需要显式确认：
+普通客户可以真实下单，不是只能 dry-run。区别是：dry-run 用来预演，不会提交；真实提交订单属于财务写操作，必须在用户明确授权后执行，并带上确认理由：
 
 ```bash
 bmall order submit --file order.json --confirm --reason "客户确认下单" --json
@@ -159,6 +159,24 @@ Agent 建议流程：
 3. 写操作先 dry-run，再让用户确认 `--confirm --reason`。
 4. 遇到错误码先调 `agent explain-error`，再调用对应 `ops` 诊断命令。
 5. 不要把 token、cookie、authorization header 放进 prompt 或日志。
+
+## 授权规则
+
+凡是会改变 Bmall 业务状态的操作，都必须先获得用户明确授权，CLI 和 Agent 不能擅自执行。包括但不限于：
+
+- 新增、修改、删除、清空、取消。
+- 加购、移除购物车、提交订单、审核订单、拒绝提货。
+- 地址 patch、商品应用更新、商品主数据导入、图片同步、job run。
+
+执行规则：
+
+| 模式 | 行为 | 是否需要用户授权 |
+| --- | --- | --- |
+| 只读查询 | 搜索、查看、诊断、导出任务查询。 | 不需要额外授权，但仍需有效登录态和权限。 |
+| `--dry-run` | 只预演将要调用的接口、payload、影响对象，不改变业务状态。 | 不执行真实写入，可用于给用户确认。 |
+| `--confirm --reason "<授权原因>"` | 执行真实写操作。 | 必须由用户明确授权，并在 `reason` 中记录授权理由。 |
+
+如果缺少 `--confirm --reason`，新增、修改、取消、审核、提交订单等写操作会被 CLI 拦截。
 
 ## 能力地图
 
@@ -289,7 +307,7 @@ bmall ops address patch --company-id <COMPANY_ID> --address-id <ADDRESS_ID> --re
 - 不记录 token、password、cookie、完整手机号、身份证号或 authorization header。
 - 本地审计记录写入 `~/.bmall-cli/audit/YYYY-MM-DD.jsonl`。
 - 业务命令不通过浏览器自动化执行。
-- 订单提交、审核、地址 patch、商品应用更新、job run 等写操作必须经过 dry-run 或 `--confirm --reason`。
+- 订单提交、审核、地址 patch、商品应用更新、job run 等写操作必须先获得用户授权，并经过 `--dry-run` 预演或使用 `--confirm --reason` 真实执行。
 - 通用 `schedule/dowork` 被禁止；job 只能走 `manifests/job-allowlist.json`。
 - 没有确认安全 API 的页面专属流程会返回 `*_REQUIRES_BACKEND_FACADE` 或 unsupported，不会返回假成功。
 

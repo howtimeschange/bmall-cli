@@ -7,6 +7,8 @@ describe("operations write gate and audit redaction", () => {
     expect(() => assertWriteGate({ confirm: true }, "write")).toThrow("WRITE_REQUIRES_REASON");
     expect(() => assertWriteGate({ dryRun: true }, "write")).not.toThrow();
     expect(() => assertWriteGate({ confirm: true, reason: "approved change" }, "write")).not.toThrow();
+    expect(() => assertWriteGate({ confirm: true }, "financial")).toThrow("WRITE_REQUIRES_REASON");
+    expect(() => assertWriteGate({ confirm: true, reason: "customer authorized submit" }, "financial")).not.toThrow();
   });
 
   it("redacts secret-like fields in audit records", () => {

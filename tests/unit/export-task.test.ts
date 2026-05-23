@@ -21,6 +21,26 @@ describe("export task normalization", () => {
     });
   });
 
+  it("normalizes nested API envelopes with direct urls", () => {
+    const result = normalizeExportResponse({
+      ok: true,
+      data: {
+        data: {
+          taskId: "T100",
+          downloadUrl: "https://example.com/order.xlsx",
+          status: "2",
+        },
+      },
+    });
+
+    expect(result).toMatchObject({
+      mode: "direct-url",
+      taskId: "T100",
+      status: "success",
+      downloadUrl: "https://example.com/order.xlsx",
+    });
+  });
+
   it("normalizes async tasks", () => {
     const result = normalizeExportResponse({ taskCode: "T100", status: "running" });
     expect(result).toMatchObject({ mode: "async-task", taskId: "T100", status: "running" });

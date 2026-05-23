@@ -29,15 +29,11 @@ export function assertWriteGate(options: WriteGateOptions, access: AccessLevel =
 
   if (options.dryRun) return;
 
-  if (access === "financial" && !options.confirm) {
-    throw new Error("FINANCIAL_REQUIRES_DRY_RUN_OR_CONFIRM");
-  }
-
   if (!options.confirm) {
-    throw new Error("WRITE_REQUIRES_DRY_RUN_OR_CONFIRM");
+    throw new Error(access === "financial" ? "FINANCIAL_REQUIRES_DRY_RUN_OR_CONFIRM" : "WRITE_REQUIRES_DRY_RUN_OR_CONFIRM");
   }
 
-  if ((access === "destructive" || access === "write") && !String(options.reason ?? "").trim()) {
+  if (!String(options.reason ?? "").trim()) {
     throw new Error("WRITE_REQUIRES_REASON");
   }
 }

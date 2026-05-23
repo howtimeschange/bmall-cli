@@ -11,9 +11,11 @@ Token storage belongs to the auth/core implementation. This Worker C scope only 
 - `read`: list, search, get, diagnose, export task read.
 - `write`: configuration changes, product imports, product application updates, image sync, job run.
 - `destructive`: delete, clear, cancel, remove. These must use `--dry-run` or `--confirm --reason`.
-- `financial`: order submit or payment-related actions. These must use `--dry-run` or `--confirm`; `--reason` is strongly recommended.
+- `financial`: order submit or payment-related actions. These must use `--dry-run` or `--confirm --reason`.
 
-Write operations must use either `--dry-run` or `--confirm --reason`. Job run requires `--dry-run` or `--confirm --reason` plus an enabled allowlist entry. Order submit must never report `submitted: true` unless an API runtime is wired and the API call succeeds; confirmed offline submits return blocked/unsupported.
+Any operation that changes Bmall business state must be user-authorized before execution. This includes create, update, delete, clear, cancel, cart mutation, order submit, pending-order review, pickup refusal, address patch, product application update, product import, image sync, and job run.
+
+Write operations must use either `--dry-run` or `--confirm --reason`. Job run requires `--dry-run` or `--confirm --reason` plus an enabled allowlist entry. Order submit must never report `submitted: true` unless an API runtime is wired, `--confirm --reason` is present, and the API call succeeds; confirmed offline submits return blocked/unsupported.
 
 ## Browser Policy
 

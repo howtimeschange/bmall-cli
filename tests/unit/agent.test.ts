@@ -58,7 +58,28 @@ describe("agent deterministic helpers", () => {
           playbookId: "pending-review-address-region-missing",
           evidenceLevel: "source-reviewed",
         }),
+        expect.objectContaining({
+          code: "BMALL_REPORT_PICKUP_CUSTOMER_SKC",
+          playbookId: "report-pickup-customer-skc",
+          evidenceLevel: "api-observed",
+        }),
       ]),
     );
+  });
+
+  it("documents pickup customer SKC report diagnosis knowledge", () => {
+    const result = explainError("PICKUP_CUSTOMER_SKC");
+
+    expect(result).toMatchObject({
+      code: "BMALL_REPORT_PICKUP_CUSTOMER_SKC",
+      canCliFixDirectly: true,
+      evidence: { level: "api-observed" },
+      playbook: {
+        id: "report-pickup-customer-skc",
+      },
+    });
+    expect(JSON.stringify(result)).toContain("report pickup-customer-skc");
+    expect(JSON.stringify(result)).toContain("activity/pickup/order/mgd/page");
+    expect(JSON.stringify(result)).toContain("pickup-derived");
   });
 });

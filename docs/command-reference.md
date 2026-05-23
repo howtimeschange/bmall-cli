@@ -41,7 +41,7 @@ Patch a manual receiving address by preserving the full address list and calling
 - Access: write
 - Auth: api-token
 - Browser: false
-- Args: --company-id (required), --address-id (required), --region-name, --region-code, --dry-run, --confirm, --reason
+- Args: --company-id (required), --address-id (required), --province-name, --city-name, --region-name, --con-address, --province-code, --city-code, --region-code, --consignee, --consi-phone, --file, --dry-run, --confirm, --reason
 - Columns: mode, apiCalls
 
 ### ops.order.diagnose
@@ -96,7 +96,7 @@ Inspect local draft blocking reasons without submitting
 - Access: read
 - Auth: api-token
 - Browser: false
-- Args: --file
+- Args: --type, --file
 - Columns: blockingIssues
 
 ### ops.order.split-check
@@ -107,7 +107,7 @@ Run local split readiness checks for pickup/grouped orders without executing spl
 - Access: read
 - Auth: api-token
 - Browser: false
-- Args: --pickup-order-id
+- Args: --type, --pickup-order-id
 - Columns: ok, blockingIssues
 
 ### ops.order.sync-check
@@ -118,7 +118,7 @@ Run local sync status interpretation before requesting manual SAP or async sync 
 - Access: read
 - Auth: api-token
 - Browser: false
-- Args: --presale-order-id
+- Args: --type, --presale-order-id
 - Columns: ok, warnings
 
 ### ops.order.export
@@ -250,7 +250,7 @@ Query product stock statistics through product/itemStock/statistics/page
 - Access: read
 - Auth: api-token
 - Browser: false
-- Args: --item-code, --sku-code
+- Args: --item-code, --sku-code, --page-index, --page-size
 - Columns: itemCode, skuCode, stockQty
 
 ### ops.stock.sync-status
@@ -261,7 +261,7 @@ Query stock sell-out sync scope through product/item/page/syncStockSellOut
 - Access: read
 - Auth: api-token
 - Browser: false
-- Args: --item-code
+- Args: --item-code, --page-index, --page-size
 - Columns: itemCode, sellOut
 
 ### ops.customer.get
@@ -294,7 +294,7 @@ Query retailer/distributor role page through hr/sysCompany/queryDistributorRole/
 - Access: read
 - Auth: api-token
 - Browser: false
-- Args: --distributor-id, --sword
+- Args: --distributor-id, --sword, --page-index, --page-size
 - Columns: distributorId, companyName
 
 ### ops.iam.user
@@ -305,7 +305,7 @@ Query IAM users through hr/iamUser/userPage or detailById
 - Access: read
 - Auth: api-token
 - Browser: false
-- Args: --user, --id
+- Args: --user, --id, --page-index, --page-size
 - Columns: id, mobile, userName
 
 ### ops.iam.role
@@ -316,7 +316,7 @@ Query IAM roles through hr/iamRole/rolePage or detailById
 - Access: read
 - Auth: api-token
 - Browser: false
-- Args: --role-code, --id
+- Args: --role-code, --id, --page-index, --page-size
 - Columns: id, roleCode, roleName
 
 ### ops.config.get
@@ -371,7 +371,7 @@ List async export tasks through file/asyn/export/b2b/page
 - Access: read
 - Auth: api-token
 - Browser: false
-- Args: --type
+- Args: --type, --page-index, --page-size
 - Columns: taskId, status, taskUrl
 
 ### ops.export.task.get

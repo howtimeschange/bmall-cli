@@ -17,7 +17,7 @@ describe('order submit confirm gate', () => {
     const result = await getOrderAdapter('replenishment').submit(plan, {});
     expect(result.submitted).toBe(false);
     expect(result.status).toBe('blocked');
-    expect(result.message).toContain('--confirm');
+    expect(result.message).toContain('--confirm --reason');
   });
 
   it('supports dry-run without confirm', async () => {
@@ -27,9 +27,17 @@ describe('order submit confirm gate', () => {
     expect(result.submitted).toBe(false);
   });
 
-  it('does not submit offline even when confirmed', async () => {
+  it('blocks financial writes without reason even when confirmed', async () => {
     const plan = await planOrderDraft(draft);
     const result = await getOrderAdapter('replenishment').submit(plan, { confirm: true });
+    expect(result.submitted).toBe(false);
+    expect(result.status).toBe('blocked');
+    expect(result.message).toContain('--reason');
+  });
+
+  it('does not submit offline even when confirmed with reason', async () => {
+    const plan = await planOrderDraft(draft);
+    const result = await getOrderAdapter('replenishment').submit(plan, { confirm: true, reason: 'customer authorized submit' });
     expect(result.submitted).toBe(false);
     expect(result.status).toBe('unsupported');
     expect(result.message).toContain('API runtime');

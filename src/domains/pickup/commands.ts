@@ -15,9 +15,9 @@ export function registerPickupCommands(
   const commandDeps = typeof outputOrDeps === 'function' ? deps : (outputOrDeps as DomainCommandDeps | undefined) ?? {};
   const adapter = new PickupAdapter();
   const cmd = program.command('pickup').description('预售提货命令');
-  cmd.command('list').option('--status <status>').option('--company-id <companyId>').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.list, cleanOptionsBody(opts)));
-  cmd.command('get').requiredOption('--pickup-order-id <pickupOrderId>').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.detail, cleanOptionsBody(opts)));
-  cmd.command('items').requiredOption('--pickup-order-id <pickupOrderId>').option('--go-pickup').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.items, cleanOptionsBody(opts)));
+  cmd.command('list').option('--status <status>').option('--company-id <companyId>').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.list, normalizePickupBody(cleanOptionsBody(opts))));
+  cmd.command('get').requiredOption('--pickup-order-id <pickupOrderId>').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.detail, normalizePickupBody(cleanOptionsBody(opts))));
+  cmd.command('items').requiredOption('--pickup-order-id <pickupOrderId>').option('--go-pickup').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, opts.goPickup ? adapter.endpoints.miniItemsByGoPickup : adapter.endpoints.items, normalizePickupBody(cleanOptionsBody(opts))));
   cmd.command('related-presale').requiredOption('--pickup-order-id <pickupOrderId>').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.relatedPresale, cleanOptionsBody(opts)));
   cmd.command('validate').requiredOption('--pickup-order-id <pickupOrderId>').option('--file <file>').option('--json').action((opts) => callBmallApi(requireGlobals(getGlobals), output, commandDeps, adapter.endpoints.validate, mergeFileAndOptions(opts)));
   cmd.command('submit').requiredOption('--pickup-order-id <pickupOrderId>').option('--file <file>').option('--dry-run').option('--confirm').option('--reason <reason>').option('--json').action(async (opts) => {
@@ -52,4 +52,11 @@ export function registerPickupCommands(
 function requireGlobals(getGlobals?: () => GlobalOptions): GlobalOptions {
   if (!getGlobals) throw new Error('API-backed pickup commands require CLI global options.');
   return getGlobals();
+}
+
+function normalizePickupBody(body: Record<string, unknown>): Record<string, unknown> {
+  const next = { ...body };
+  if (next.pickupOrderId && !next.id) next.id = next.pickupOrderId;
+  if (next.id && !next.pickupOrderId) next.pickupOrderId = next.id;
+  return next;
 }

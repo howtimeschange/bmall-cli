@@ -45,6 +45,8 @@ bmall ops product apply update --input apply-items.csv --dry-run --json
 bmall ops product apply update --input apply-items.csv --confirm --reason "approved product application change" --json
 ```
 
+Agents must treat every business-state mutation as user-authorized only. Do not execute create, update, delete, clear, cancel, cart mutation, order submit, pending-order review, pickup refusal, address patch, product application update, product import, image sync, or job run unless the user has explicitly approved the exact operation. Use `--dry-run` first, then execute the real command only with `--confirm --reason`.
+
 Job commands are intentionally narrow:
 
 ```bash
@@ -64,7 +66,7 @@ When an external user escalates a case, ask them to include:
 - `requestId`
 - redacted `profile/env/groupId/companyId/orderId` or `orderNo`
 
-Order submit must be treated as financial. Without a real API runtime, even `--confirm` returns blocked/unsupported; never infer success from an offline plan.
+Order submit must be treated as financial. Without a real API runtime, even `--confirm --reason` returns blocked/unsupported; never infer success from an offline plan.
 
 ## Puma/多品牌订单地址排障
 

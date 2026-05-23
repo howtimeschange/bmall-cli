@@ -110,7 +110,7 @@ export function dryRunSequence(command: string, steps: ApiStep[], body: Record<s
       endpoint: step.path,
       body: step.body ?? body,
     })),
-    nextActions: ['Review the API call sequence', 'Run validate before confirmed submit', 'Re-run with --confirm after approval'],
+    nextActions: ['Review the API call sequence', 'Run validate before confirmed submit', 'Re-run with --confirm --reason after user approval'],
   };
 }
 

@@ -68,7 +68,7 @@ export interface UnknownDiagnosticExplanation {
 export const diagnosticKnowledgePack: DiagnosticKnowledgePack = {
   id: "bmall-cli-diagnostics",
   schemaVersion: 1,
-  version: "2026.05.24.1",
+  version: "2026.05.24.2",
   lastReviewed: "2026-05-24",
   distribution: "bundled",
   sourceReposRequired: false,
@@ -125,6 +125,45 @@ export const diagnosticEntries: DiagnosticEntry[] = [
       "b2b/fundmanagement/balance 仍可出现在旧后台资金管理详情页，抬头 AdvTotal/availableAmount 不作为当前下单或审核余额判断的主口径。",
     ],
     supportBundleHints: ["knowledgePack", "requestId", "profile", "groupId", "companyId", "pendingOrderId"],
+  },
+  {
+    code: "BMALL_REPORT_PICKUP_CUSTOMER_SKC",
+    aliases: ["PICKUP_CUSTOMER_SKC", "REPORT_PICKUP_CUSTOMER_SKC"],
+    messageIncludes: ["客户+SKC", "提货率", "activity/pickup/order/mgd/page", "selectPickupOrderSkus"],
+    title: "客户+SKC 提货率报表口径",
+    rootCause:
+      "客户+SKC 维度提货率没有单一现成后台接口，需要以提货单中台列表为入口，拉取每张提货单的 SKU 明细，再按客户和 SKC 本地聚合；源订单明细可作为第二口径 join，join 不可用时退回提货单派生口径。",
+    canCliFixDirectly: true,
+    evidence: {
+      level: "api-observed",
+      reviewedAt: "2026-05-24",
+      summary:
+        "Live 26Q2 probe confirmed activity/pickup/order/mgd/page returns pickup rows with source type, company/dealer, presales order/activity references, and activity/pickup/order/mgd/selectPickupOrderSkus returns skcCode, allocatedQuantity, pickedQuantity, and pendingPickedQuantity.",
+    },
+    playbook: {
+      id: "report-pickup-customer-skc",
+      title: "提货单、柔供订单、中短期订单客户+SKC 提货率探查",
+      summary: "用 report pickup-customer-skc 输出提货单口径和源订单口径，先确认活动关键词、来源和分页范围。",
+      steps: [
+        "确认当前 profile/env 和品牌上下文，例如森马订货商城使用 semir-report/prod。",
+        "用 --activity-query 传活动关键词，如 26Q2；柔供来源使用 --source supply，中短期来源使用 --source mid，混合探查使用 --source all。",
+        "先用小 page-size 查看 pickupPages.totalCount、pickupScopeRows、sourceOrderScopeRows 和 meta.sourceOrderJoin.status。",
+        "若 sourceOrderJoin.status 为 pickup-derived，说明源订单明细接口未返回可 join 明细，本次源订单口径是由提货单明细派生，需要进一步核对源订单接口入参。",
+        "业务确认字段后，可用 --format csv 交给表格工具继续分析。",
+      ],
+      commands: [
+        "bmall report pickup-customer-skc --activity-query 26Q2 --source supply --page-size 10 --json",
+        "bmall report pickup-customer-skc --activity-query 26Q2 --source mid --page-size 10 --json",
+        "bmall report pickup-customer-skc --activity-query 26Q2 --source all --page-size 100 --format csv",
+      ],
+    },
+    notes: [
+      "提货单来源类型目前按 pickupOrderSourceType/activityType 识别：1 是中短期订单，2 是柔供订单。",
+      "提货单口径的分母来自 allocatedQuantity，已提来自 pickedQuantity，待提来自 pendingPickedQuantity。",
+      "源订单口径优先读取 activity/mini/supply/presale/order/query/order/detail/item 或 activity/mini/presaleActivity/queryItems/byOrderId；读取失败或为空时会用提货单明细派生，并在 joinStatus 标记 pickup-derived。",
+      "26Q2 柔供样例探查返回提货单总数 15107；同一关键词下中短期 activityType=1 样例返回 0，需要确认中短期活动关键词或批次条件。",
+    ],
+    supportBundleHints: ["knowledgePack", "requestId", "profile", "env", "activityQuery", "source", "pageSize", "pickupPages", "sourceOrderJoin"],
   },
 ];
 

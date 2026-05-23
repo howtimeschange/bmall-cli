@@ -10,7 +10,7 @@ import { BmallOrderTypeSchema, parseOrderDraft } from '../../schemas/order.js';
 import { getOrderAdapter } from './adapters/index.js';
 import { inspectOrderFlow, listOrderTypes } from './flow-inspector.js';
 import { buildRuleChainSkeleton } from './rule-chain.js';
-import { assertWriteGate } from '../ops/safety.js';
+import { assertWriteGate, dryRunPlan } from '../ops/safety.js';
 
 type OutputFn = (payload: unknown) => void;
 type ClientLike = { send<T = unknown>(opts: BmallRequestOptions): Promise<{ data?: T; requestId: string; durationMs: number }> };
@@ -94,11 +94,16 @@ export function registerOrderCommands(program: Command, getGlobalsOrOutput?: (()
       companyId: opts.companyId
     });
   });
-  order.command('cancel').requiredOption('--order-no <orderNo>').option('--confirm').option('--reason <reason>').option('--company-id <companyId>').option('--json').action(async (opts) => {
-    if (!opts.confirm || !opts.reason) {
-      throw new BmallCliError('INPUT_ERROR', 'Order cancel requires --confirm and --reason', {
-        recover: 'Read order detail first and include a cancellation reason before executing.'
-      });
+  order.command('cancel').requiredOption('--order-no <orderNo>').option('--confirm').option('--dry-run').option('--reason <reason>').option('--company-id <companyId>').option('--json').action(async (opts) => {
+    assertWriteGate(opts, 'destructive');
+    const body = {
+      orderNo: opts.orderNo,
+      reason: opts.reason,
+      companyId: opts.companyId
+    };
+    if (opts.dryRun) {
+      output(dryRunPlan('order.cancel', 1, [{ method: 'POST', endpoint: orderEndpoints.cancel, body }]));
+      return;
     }
     await callCustomerOrderApi(requireGlobals(getGlobals), output, commandDeps, orderEndpoints.cancel, {
       orderNo: opts.orderNo,

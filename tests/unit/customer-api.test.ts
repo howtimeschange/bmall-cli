@@ -105,8 +105,8 @@ describe('customer API commands', () => {
     });
   });
 
-  it('calls order read API and blocks cancel without reason', async () => {
-    const { configHome, program, calls } = await createHarness();
+  it('calls order read API, dry-runs cancel, and blocks cancel without authorization', async () => {
+    const { configHome, program, calls, outputs } = await createHarness();
     await program.parseAsync(['node', 'bmall', '--config-home', configHome, '--profile', 'unit', '--env', 'local', '--json', 'order', 'get', '--order-no', 'DH001']);
     expect(calls[0]).toMatchObject({
       method: 'POST',
@@ -116,6 +116,15 @@ describe('customer API commands', () => {
 
     await expect(
       program.parseAsync(['node', 'bmall', '--config-home', configHome, '--profile', 'unit', '--env', 'local', '--json', 'order', 'cancel', '--order-no', 'DH001', '--confirm'])
-    ).rejects.toThrow('Order cancel requires --confirm and --reason');
+    ).rejects.toThrow('WRITE_REQUIRES_REASON');
+
+    await program.parseAsync(['node', 'bmall', '--config-home', configHome, '--profile', 'unit', '--env', 'local', '--json', 'order', 'cancel', '--order-no', 'DH001', '--dry-run']);
+    expect(calls).toHaveLength(1);
+    expect(outputs[1]).toMatchObject({
+      ok: true,
+      mode: 'dry-run',
+      command: 'order.cancel',
+      apiCalls: [{ endpoint: 'b2b/order/new/cancel' }]
+    });
   });
 });

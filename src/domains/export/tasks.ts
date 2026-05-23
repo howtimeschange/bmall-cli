@@ -65,9 +65,7 @@ export function writePendingExport(record: Omit<PendingExportRecord, "id" | "cre
 }
 
 export function normalizeExportResponse(raw: unknown, options: { sourceEndpoint?: string; type?: string; operator?: string; pendingFile?: string } = {}): NormalizedExportTask {
-  const source = raw && typeof raw === "object" && "data" in raw && (raw as { data?: unknown }).data
-    ? (raw as { data: unknown }).data
-    : raw;
+  const source = unwrapDataEnvelope(raw);
   const obj = source && typeof source === "object" ? source as Record<string, unknown> : {};
   const downloadUrl = pickString(obj, DIRECT_URL_KEYS);
   const taskId = pickString(obj, TASK_ID_KEYS);
@@ -123,9 +121,7 @@ export function findTaskInList(raw: unknown, taskId: string): NormalizedExportTa
 }
 
 function extractTaskItems(raw: unknown): unknown[] {
-  const source = raw && typeof raw === "object" && "data" in raw && (raw as { data?: unknown }).data
-    ? (raw as { data: unknown }).data
-    : raw;
+  const source = unwrapDataEnvelope(raw);
   if (Array.isArray(source)) return source;
   const obj = source && typeof source === "object" ? source as Record<string, unknown> : {};
   for (const key of ["content", "items", "records", "rows", "list", "DataLine"]) {
@@ -133,6 +129,17 @@ function extractTaskItems(raw: unknown): unknown[] {
   }
   if (obj.data && typeof obj.data === "object") return extractTaskItems(obj.data);
   return [];
+}
+
+function unwrapDataEnvelope(raw: unknown): unknown {
+  let source = raw;
+  for (let depth = 0; depth < 4; depth += 1) {
+    if (!source || typeof source !== "object" || Array.isArray(source) || !("data" in source)) return source;
+    const next = (source as { data?: unknown }).data;
+    if (next === undefined || next === null) return source;
+    source = next;
+  }
+  return source;
 }
 
 export async function waitForExportTask(

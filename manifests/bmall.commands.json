@@ -149,6 +149,10 @@
         {
           "name": "from-file",
           "type": "path"
+        },
+        {
+          "name": "skip-verify",
+          "type": "bool"
         }
       ],
       "columns": [
@@ -183,6 +187,10 @@
         {
           "name": "password",
           "type": "str"
+        },
+        {
+          "name": "skip-verify",
+          "type": "bool"
         }
       ],
       "columns": [
@@ -337,6 +345,10 @@
           "name": "company-id",
           "type": "str",
           "required": true
+        },
+        {
+          "name": "company-name",
+          "type": "str"
         }
       ],
       "columns": [
@@ -476,6 +488,10 @@
         {
           "name": "limit",
           "type": "number"
+        },
+        {
+          "name": "company-id",
+          "type": "str"
         }
       ],
       "columns": [
@@ -497,6 +513,14 @@
         {
           "name": "item-code",
           "type": "str"
+        },
+        {
+          "name": "item-id",
+          "type": "str"
+        },
+        {
+          "name": "company-id",
+          "type": "str"
         }
       ],
       "columns": [
@@ -516,6 +540,10 @@
       "args": [
         {
           "name": "skc-code",
+          "type": "str"
+        },
+        {
+          "name": "company-id",
           "type": "str"
         }
       ],
@@ -545,6 +573,10 @@
           "name": "quantity",
           "type": "number",
           "required": true
+        },
+        {
+          "name": "company-id",
+          "type": "str"
         }
       ],
       "columns": [
@@ -561,7 +593,16 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "item-code",
+          "type": "str"
+        },
+        {
+          "name": "company-id",
+          "type": "str"
+        }
+      ],
       "columns": [
         "labelCode",
         "labelName"
@@ -579,7 +620,13 @@
       "args": [
         {
           "name": "sku-code",
-          "type": "str"
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "company-id",
+          "type": "str",
+          "required": true
         }
       ],
       "columns": [
@@ -596,7 +643,12 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "company-id",
+          "type": "str"
+        }
+      ],
       "columns": [
         "skuCode",
         "quantity"
@@ -621,6 +673,22 @@
           "name": "qty",
           "type": "number",
           "required": true
+        },
+        {
+          "name": "company-id",
+          "type": "str"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
         }
       ],
       "columns": [
@@ -628,7 +696,7 @@
         "body"
       ],
       "name": "cart.add",
-      "description": "Add SKU to cart",
+      "description": "Add SKU to cart with write gate",
       "audience": "customer",
       "access": "write",
       "strategy": "api-token"
@@ -644,15 +712,28 @@
           "required": true
         },
         {
+          "name": "company-id",
+          "type": "str"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
           "name": "confirm",
           "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
         }
       ],
       "columns": [
-        "blocked"
+        "endpoint",
+        "body"
       ],
       "name": "cart.remove",
-      "description": "Remove SKU from cart with confirmation",
+      "description": "Remove SKU from cart with destructive gate",
       "audience": "customer",
       "access": "destructive",
       "strategy": "api-token"
@@ -663,15 +744,28 @@
       "browser": false,
       "args": [
         {
+          "name": "company-id",
+          "type": "str"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
           "name": "confirm",
           "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
         }
       ],
       "columns": [
-        "blocked"
+        "endpoint",
+        "body"
       ],
       "name": "cart.clear",
-      "description": "Clear cart with confirmation",
+      "description": "Clear cart with destructive gate",
       "audience": "customer",
       "access": "destructive",
       "strategy": "api-token"
@@ -795,6 +889,10 @@
           "name": "file",
           "type": "path",
           "required": true
+        },
+        {
+          "name": "type",
+          "type": "str"
         }
       ],
       "columns": [
@@ -821,12 +919,20 @@
           "required": true
         },
         {
+          "name": "type",
+          "type": "str"
+        },
+        {
           "name": "confirm",
           "type": "bool"
         },
         {
           "name": "dry-run",
           "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
         }
       ],
       "columns": [
@@ -845,7 +951,24 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "status",
+          "type": "str"
+        },
+        {
+          "name": "from",
+          "type": "str"
+        },
+        {
+          "name": "to",
+          "type": "str"
+        },
+        {
+          "name": "company-id",
+          "type": "str"
+        }
+      ],
       "columns": [
         "orderNo",
         "status"
@@ -865,6 +988,10 @@
           "name": "order-no",
           "type": "str",
           "required": true
+        },
+        {
+          "name": "company-id",
+          "type": "str"
         }
       ],
       "columns": [
@@ -888,15 +1015,28 @@
           "required": true
         },
         {
+          "name": "company-id",
+          "type": "str"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
           "name": "confirm",
           "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
         }
       ],
       "columns": [
-        "blocked"
+        "mode",
+        "apiCalls"
       ],
       "name": "order.cancel",
-      "description": "Cancel an order with confirmation",
+      "description": "Cancel an order with destructive gate",
       "audience": "customer",
       "access": "destructive",
       "strategy": "api-token"
@@ -905,7 +1045,17 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "order-no",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "company-id",
+          "type": "str"
+        }
+      ],
       "columns": [
         "invoiceNo",
         "deliveryStatus"
@@ -920,7 +1070,17 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "order-no",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "company-id",
+          "type": "str"
+        }
+      ],
       "columns": [
         "invoiceNo",
         "invoiceStatus"
@@ -996,6 +1156,10 @@
         {
           "name": "dry-run",
           "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
         }
       ],
       "columns": [
@@ -1013,7 +1177,16 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "order-no",
+          "type": "str"
+        },
+        {
+          "name": "order-id",
+          "type": "str"
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1092,6 +1265,10 @@
         {
           "name": "dry-run",
           "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
         }
       ],
       "columns": [
@@ -1109,7 +1286,16 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "order-no",
+          "type": "str"
+        },
+        {
+          "name": "order-id",
+          "type": "str"
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1151,7 +1337,13 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "file",
+          "type": "path",
+          "required": true
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1171,12 +1363,21 @@
       "browser": false,
       "args": [
         {
+          "name": "file",
+          "type": "path",
+          "required": true
+        },
+        {
           "name": "confirm",
           "type": "bool"
         },
         {
           "name": "dry-run",
           "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
         }
       ],
       "columns": [
@@ -1194,7 +1395,16 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "order-no",
+          "type": "str"
+        },
+        {
+          "name": "order-id",
+          "type": "str"
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1212,7 +1422,13 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "file",
+          "type": "path",
+          "required": true
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1232,11 +1448,24 @@
       "browser": false,
       "args": [
         {
+          "name": "file",
+          "type": "path",
+          "required": true
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
           "name": "confirm",
           "type": "bool"
         },
         {
-          "name": "dry-run",
+          "name": "reason",
+          "type": "str"
+        },
+        {
+          "name": "resume-waiting-order",
           "type": "bool"
         }
       ],
@@ -1255,7 +1484,13 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "presale-order-id",
+          "type": "str",
+          "required": true
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1273,7 +1508,16 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "activity-id",
+          "type": "str"
+        },
+        {
+          "name": "company-id",
+          "type": "str"
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1293,12 +1537,24 @@
       "browser": false,
       "args": [
         {
-          "name": "confirm",
-          "type": "bool"
+          "name": "activity-id",
+          "type": "str"
+        },
+        {
+          "name": "company-id",
+          "type": "str"
         },
         {
           "name": "dry-run",
           "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
         }
       ],
       "columns": [
@@ -1316,7 +1572,13 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "order-id",
+          "type": "str",
+          "required": true
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1334,7 +1596,17 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "pickup-order-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "file",
+          "type": "path"
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1354,12 +1626,25 @@
       "browser": false,
       "args": [
         {
-          "name": "confirm",
-          "type": "bool"
+          "name": "pickup-order-id",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "file",
+          "type": "path"
         },
         {
           "name": "dry-run",
           "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
         }
       ],
       "columns": [
@@ -1377,7 +1662,13 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "pickup-order-id",
+          "type": "str",
+          "required": true
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1395,7 +1686,12 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "file",
+          "type": "path"
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1415,12 +1711,20 @@
       "browser": false,
       "args": [
         {
-          "name": "confirm",
-          "type": "bool"
+          "name": "file",
+          "type": "path"
         },
         {
           "name": "dry-run",
           "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "reason",
+          "type": "str"
         }
       ],
       "columns": [
@@ -1438,7 +1742,13 @@
       "site": "bmall",
       "domain": "bmall.semirapp.com",
       "browser": false,
-      "args": [],
+      "args": [
+        {
+          "name": "new-store-order-id",
+          "type": "str",
+          "required": true
+        }
+      ],
       "columns": [
         "orderType",
         "status",
@@ -1770,6 +2080,156 @@
       "browser": false,
       "args": [
         {
+          "name": "activity-query",
+          "type": "str"
+        },
+        {
+          "name": "activity-ids",
+          "type": "csv"
+        },
+        {
+          "name": "page-index",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
+        },
+        {
+          "name": "only-unfulfilled",
+          "type": "bool"
+        },
+        {
+          "name": "pickup-activity-status",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "activities",
+        "activityIdList",
+        "pickupActivityRows",
+        "pickupActivityTotals"
+      ],
+      "name": "report.supply-pickup-activity",
+      "description": "Probe supply presale pickup status by activity batch dimension",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "activity-query",
+          "type": "str"
+        },
+        {
+          "name": "activity-ids",
+          "type": "csv"
+        },
+        {
+          "name": "page-index",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
+        },
+        {
+          "name": "company-code",
+          "type": "csv"
+        },
+        {
+          "name": "company-name",
+          "type": "str"
+        },
+        {
+          "name": "distributor-code",
+          "type": "csv"
+        },
+        {
+          "name": "distributor-name",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "activities",
+        "activityIdList",
+        "customerRows",
+        "customerGroupRows",
+        "customerTotals"
+      ],
+      "name": "report.supply-pickup-customer",
+      "description": "Probe supply presale pickup rate by customer and distributor dimension",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
+          "name": "activity-query",
+          "type": "str"
+        },
+        {
+          "name": "source",
+          "type": "enum:supply|mid|all"
+        },
+        {
+          "name": "page-index",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
+        },
+        {
+          "name": "company-code",
+          "type": "str"
+        },
+        {
+          "name": "company-name",
+          "type": "str"
+        },
+        {
+          "name": "distributor-code",
+          "type": "str"
+        },
+        {
+          "name": "distributor-name",
+          "type": "str"
+        },
+        {
+          "name": "format",
+          "type": "enum:json|csv"
+        },
+        {
+          "name": "csv",
+          "type": "bool"
+        }
+      ],
+      "columns": [
+        "pickupScopeRows",
+        "sourceOrderScopeRows",
+        "meta"
+      ],
+      "name": "report.pickup-customer-skc",
+      "description": "Aggregate pickup rate and pickup/source-order details by customer and SKC",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
           "name": "status",
           "type": "str"
         },
@@ -2090,6 +2550,10 @@
         {
           "name": "reason",
           "type": "str"
+        },
+        {
+          "name": "mini",
+          "type": "bool"
         }
       ],
       "columns": [
@@ -2218,12 +2682,44 @@
           "required": true
         },
         {
+          "name": "province-name",
+          "type": "str"
+        },
+        {
+          "name": "city-name",
+          "type": "str"
+        },
+        {
           "name": "region-name",
+          "type": "str"
+        },
+        {
+          "name": "con-address",
+          "type": "str"
+        },
+        {
+          "name": "province-code",
+          "type": "str"
+        },
+        {
+          "name": "city-code",
           "type": "str"
         },
         {
           "name": "region-code",
           "type": "str"
+        },
+        {
+          "name": "consignee",
+          "type": "str"
+        },
+        {
+          "name": "consi-phone",
+          "type": "str"
+        },
+        {
+          "name": "file",
+          "type": "path"
         },
         {
           "name": "dry-run",
@@ -2349,6 +2845,10 @@
       "browser": false,
       "args": [
         {
+          "name": "type",
+          "type": "str"
+        },
+        {
           "name": "file",
           "type": "path"
         }
@@ -2367,6 +2867,10 @@
       "domain": "bmall.semirapp.com",
       "browser": false,
       "args": [
+        {
+          "name": "type",
+          "type": "str"
+        },
         {
           "name": "pickup-order-id",
           "type": "str"
@@ -2387,6 +2891,10 @@
       "domain": "bmall.semirapp.com",
       "browser": false,
       "args": [
+        {
+          "name": "type",
+          "type": "str"
+        },
         {
           "name": "presale-order-id",
           "type": "str"
@@ -2682,6 +3190,14 @@
         {
           "name": "sku-code",
           "type": "str"
+        },
+        {
+          "name": "page-index",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
         }
       ],
       "columns": [
@@ -2703,6 +3219,14 @@
         {
           "name": "item-code",
           "type": "str"
+        },
+        {
+          "name": "page-index",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
         }
       ],
       "columns": [
@@ -2773,6 +3297,14 @@
         {
           "name": "sword",
           "type": "str"
+        },
+        {
+          "name": "page-index",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
         }
       ],
       "columns": [
@@ -2797,6 +3329,14 @@
         {
           "name": "id",
           "type": "str"
+        },
+        {
+          "name": "page-index",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
         }
       ],
       "columns": [
@@ -2822,6 +3362,14 @@
         {
           "name": "id",
           "type": "str"
+        },
+        {
+          "name": "page-index",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
         }
       ],
       "columns": [
@@ -2947,6 +3495,14 @@
         {
           "name": "type",
           "type": "str"
+        },
+        {
+          "name": "page-index",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
         }
       ],
       "columns": [

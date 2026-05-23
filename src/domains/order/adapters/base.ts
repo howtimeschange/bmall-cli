@@ -68,7 +68,21 @@ export abstract class BaseOrderFlowAdapter implements OrderFlowAdapter {
         endpoint: plan.submitEndpoint,
         idempotencyKey: plan.idempotencyKey,
         status: 'blocked',
-        message: 'Financial write blocked: rerun with --confirm to submit.',
+        message: 'Financial write blocked: rerun with --confirm --reason after user authorization.',
+      });
+      await this.auditSubmit(runtime, auditArgs, 'error');
+      return result;
+    }
+    if (!String(opts.reason ?? '').trim()) {
+      const result = OrderSubmitResultSchema.parse({
+        submitted: false,
+        orderType: this.type,
+        mode: plan.mode,
+        orderNo: null,
+        endpoint: plan.submitEndpoint,
+        idempotencyKey: plan.idempotencyKey,
+        status: 'blocked',
+        message: 'Financial write blocked: --reason is required for user-authorized submit.',
       });
       await this.auditSubmit(runtime, auditArgs, 'error');
       return result;
