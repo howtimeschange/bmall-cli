@@ -12,6 +12,13 @@ describe("agent deterministic helpers", () => {
         id: "bmall-cli-diagnostics",
         schemaVersion: 1,
       },
+      fundingBasis: {
+        primary: "sap-available-balance",
+        orderBalanceFields: ["sapDistributorBalance", "companyAvailableBalance"],
+        rebateBalanceFields: ["rebateBalance", "rebateAvailableBalance"],
+        legacyBmallFundsHeader: "b2b/fundmanagement/balance",
+        legacyHeaderIsOrderBalanceSource: false,
+      },
       evidence: {
         level: "source-reviewed",
       },
@@ -26,6 +33,8 @@ describe("agent deterministic helpers", () => {
     expect(JSON.stringify(result)).toContain("ops order diagnose-pending");
     expect(JSON.stringify(result)).toContain("ops address check");
     expect(JSON.stringify(result)).toContain("ops address patch");
+    expect(JSON.stringify(result)).toContain("SAP");
+    expect(JSON.stringify(result)).toContain("b2b/fundmanagement/balance");
   });
 
   it("recognizes the same address failure from message text", () => {

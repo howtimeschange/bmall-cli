@@ -18,6 +18,14 @@ export interface DiagnosticPlaybook {
   commands: string[];
 }
 
+export interface DiagnosticFundingBasis {
+  primary: "sap-available-balance";
+  orderBalanceFields: string[];
+  rebateBalanceFields: string[];
+  legacyBmallFundsHeader: string;
+  legacyHeaderIsOrderBalanceSource: boolean;
+}
+
 export interface DiagnosticEntry {
   code: string;
   aliases?: string[];
@@ -31,6 +39,7 @@ export interface DiagnosticEntry {
     summary: string;
   };
   playbook: DiagnosticPlaybook;
+  fundingBasis?: DiagnosticFundingBasis;
   notes: string[];
   supportBundleHints: string[];
 }
@@ -54,13 +63,12 @@ export interface UnknownDiagnosticExplanation {
   playbook: DiagnosticPlaybook;
   commands: string[];
   supportBundleHints: string[];
-  commands: string[];
 }
 
 export const diagnosticKnowledgePack: DiagnosticKnowledgePack = {
   id: "bmall-cli-diagnostics",
   schemaVersion: 1,
-  version: "2026.05.24",
+  version: "2026.05.24.1",
   lastReviewed: "2026-05-24",
   distribution: "bundled",
   sourceReposRequired: false,
@@ -80,7 +88,7 @@ export const diagnosticEntries: DiagnosticEntry[] = [
       level: "source-reviewed",
       reviewedAt: "2026-05-24",
       summary:
-        "Internal review tied this error to pending-order approval address completeness checks, not to customer account balance.",
+        "Internal review tied this error to pending-order approval address completeness checks, not to customer account balance. Current order display and balance checks use SAP available-balance sources rather than the legacy Bmall funds header.",
     },
     playbook: {
       id: "pending-review-address-region-missing",
@@ -103,9 +111,18 @@ export const diagnosticEntries: DiagnosticEntry[] = [
         'bmall ops address patch --company-id <COMPANY_ID> --address-id <ADDRESS_ID> --region-name <区县> --region-code <区县编码> --confirm --reason "补齐审核失败收货地址区县" --json',
       ],
     },
+    fundingBasis: {
+      primary: "sap-available-balance",
+      orderBalanceFields: ["sapDistributorBalance", "companyAvailableBalance"],
+      rebateBalanceFields: ["rebateBalance", "rebateAvailableBalance"],
+      legacyBmallFundsHeader: "b2b/fundmanagement/balance",
+      legacyHeaderIsOrderBalanceSource: false,
+    },
     notes: [
       "如果地址来源是 MDM，CLI 会阻止直接修改，请先修正主数据并同步。",
       "这类失败和客户账户余额不是同一条规则链路；账户有钱不能排除地址校验失败。",
+      "当前小程序下单、审核和我的页余额呈现，以及后端下单余额校验，主口径是 SAP 可用余额：门店可用余额看 sapDistributorBalance/companyAvailableBalance，返利金看 rebateBalance/rebateAvailableBalance。",
+      "b2b/fundmanagement/balance 仍可出现在旧后台资金管理详情页，抬头 AdvTotal/availableAmount 不作为当前下单或审核余额判断的主口径。",
     ],
     supportBundleHints: ["knowledgePack", "requestId", "profile", "groupId", "companyId", "pendingOrderId"],
   },
