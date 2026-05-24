@@ -1,9 +1,12 @@
+import { buildPresaleBusinessReport } from "./presale-business.js";
+
 type ApiClient = { request: (method: string, path: string, body?: unknown) => Promise<unknown> };
 type OutputFn = (payload: unknown) => void;
 type CommandLike = {
   command(name: string): CommandLike;
   description(text: string): CommandLike;
   option(flags: string, description?: string, defaultValue?: unknown): CommandLike;
+  requiredOption(flags: string, description?: string, defaultValue?: unknown): CommandLike;
   action(fn: (options: Record<string, unknown>) => unknown): CommandLike;
 };
 
@@ -781,6 +784,23 @@ export function registerReportCommands(program: CommandLike, client?: ApiClient,
         return reportData;
       }
       return emit(output, reportData);
+    });
+
+  report
+    .command("presale-business")
+    .description("Generate presale business summary and Excel detail report")
+    .option("--source <source>", "supply or mid", "supply")
+    .requiredOption("--start-date <startDate>")
+    .requiredOption("--end-date <endDate>")
+    .requiredOption("--output <output>")
+    .option("--activity-query <activityQuery>")
+    .option("--page-size <pageSize>")
+    .option("--export-timeout-ms <exportTimeoutMs>")
+    .option("--export-poll-interval-ms <exportPollIntervalMs>")
+    .option("--json")
+    .action(async (options) => {
+      const api = requireClient(client, "report presale business");
+      return emit(output, await buildPresaleBusinessReport(api, options));
     });
 
   return report;

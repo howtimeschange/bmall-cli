@@ -2231,6 +2231,65 @@
       "browser": false,
       "args": [
         {
+          "name": "source",
+          "type": "enum:supply|mid"
+        },
+        {
+          "name": "start-date",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "end-date",
+          "type": "str",
+          "required": true
+        },
+        {
+          "name": "output",
+          "type": "path",
+          "required": true
+        },
+        {
+          "name": "activity-query",
+          "type": "str"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
+        },
+        {
+          "name": "export-timeout-ms",
+          "type": "number"
+        },
+        {
+          "name": "export-poll-interval-ms",
+          "type": "number"
+        }
+      ],
+      "columns": [
+        "activities",
+        "orderRows",
+        "orderTotals",
+        "pickupActivityRows",
+        "pickupActivityTotals",
+        "customerRows",
+        "customerTotals",
+        "summary",
+        "amountBasis",
+        "output"
+      ],
+      "name": "report.presale-business",
+      "description": "Generate a summary and Excel detail workbook for flexible-supply or middle/short-term presale business",
+      "audience": "ops",
+      "access": "read",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
           "name": "status",
           "type": "str"
         },

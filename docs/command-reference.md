@@ -1,5 +1,49 @@
 ## Operations Commands
 
+### report.supply-pickup-activity
+
+Probe supply presale pickup status by activity batch dimension
+
+- Audience: ops
+- Access: read
+- Auth: api-token
+- Browser: false
+- Args: --activity-query, --activity-ids, --page-index, --page-size, --only-unfulfilled, --pickup-activity-status
+- Columns: activities, activityIdList, pickupActivityRows, pickupActivityTotals
+
+### report.supply-pickup-customer
+
+Probe supply presale pickup rate by customer and distributor dimension
+
+- Audience: ops
+- Access: read
+- Auth: api-token
+- Browser: false
+- Args: --activity-query, --activity-ids, --page-index, --page-size, --company-code, --company-name, --distributor-code, --distributor-name
+- Columns: activities, activityIdList, customerRows, customerGroupRows, customerTotals
+
+### report.pickup-customer-skc
+
+Aggregate pickup rate and pickup/source-order details by customer and SKC
+
+- Audience: ops
+- Access: read
+- Auth: api-token
+- Browser: false
+- Args: --activity-query, --source, --page-index, --page-size, --company-code, --company-name, --distributor-code, --distributor-name, --format, --csv
+- Columns: pickupScopeRows, sourceOrderScopeRows, meta
+
+### report.presale-business
+
+Generate a summary and Excel detail workbook for flexible-supply or middle/short-term presale business
+
+- Audience: ops
+- Access: read
+- Auth: api-token
+- Browser: false
+- Args: --source, --start-date (required), --end-date (required), --output (required), --activity-query, --page-size, --export-timeout-ms, --export-poll-interval-ms
+- Columns: activities, orderRows, orderTotals, pickupActivityRows, pickupActivityTotals, customerRows, customerTotals, summary, amountBasis, output
+
 ### ops.address.list
 
 List store receiving addresses through hr/mb2bcrd3/list

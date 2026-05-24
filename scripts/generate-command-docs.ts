@@ -35,8 +35,11 @@ function renderCommand(command: ManifestCommand): string {
 
 export function generateCommandDocs(manifestPath: string) {
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { commands: ManifestCommand[] };
-  const opsCommands = manifest.commands.filter((command) => command.name.startsWith("ops."));
-  return ["## Operations Commands", "", ...opsCommands.map(renderCommand)].join("\n");
+  const documentedCommands = manifest.commands.filter((command) => (
+    command.name.startsWith("ops.")
+    || command.name.startsWith("report.")
+  ));
+  return ["## Operations Commands", "", ...documentedCommands.map(renderCommand)].join("\n");
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

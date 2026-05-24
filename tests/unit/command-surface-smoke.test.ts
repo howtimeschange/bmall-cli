@@ -22,6 +22,7 @@ let orderDraftFile = '';
 let pendingReviewFile = '';
 let patchFile = '';
 let downloadFile = '';
+let reportFile = '';
 const requests: RecordedRequest[] = [];
 
 beforeAll(async () => {
@@ -56,6 +57,7 @@ beforeEach(async () => {
   pendingReviewFile = join(configHome, 'pending-review.json');
   patchFile = join(configHome, 'address-patch.json');
   downloadFile = join(configHome, 'download.txt');
+  reportFile = join(configHome, 'presale-business.xlsx');
   await writeFile(orderDraftFile, JSON.stringify({
     companyId: 'C001',
     orderType: 'replenishment',
@@ -150,6 +152,7 @@ function buildScenario(name: string): { argv: string[]; expectedExitCode: number
     'company.switch': ['company', 'switch', '--sc-id', 'SC1'],
     'permission.list': ['permission', 'list'],
     'permission.check': ['permission', 'check', '--fun-code', 'b2b:order:create'],
+    'report.presale-business': ['report', 'presale-business', '--source', 'mid', '--start-date', '2026-01-01', '--end-date', '2026-05-24', '--output', reportFile],
     'order-type.list': ['order-type', 'list'],
     'order-type.get': ['order-type', 'get', '--type', 'replenishment'],
     'order-flow.inspect': ['order-flow', 'inspect', '--type', 'replenishment'],
@@ -304,6 +307,13 @@ function responseFor(path: string, body: unknown): unknown {
   if (path.includes('queryCompanyRole') || path.includes('LoginCompanys')) return { ResultInt: 0, DataLine: [{ scId: 'SC1', companyId: 'C001', companyName: '西湖店', companyCode: 'C001' }] };
   if (path.includes('ChangeLogin')) return { ResultInt: 0, tokenId: 'company-token', groupId: 'G001', companyId: 'C001', companyName: '西湖店' };
   if (path === 'hr/mb2bcrd3/list') return { data: [{ fid: 'ADDR001', provinceName: '浙江省', cityName: '杭州市', regionName: '区', conAddress: '文三路 1 号', sourceType: 1 }] };
+  if (path === 'activity/presaleActivities/findActivity') return { data: { content: [{ presaleId: 'M001', presaleCode: '202603', presaleName: '26春中短期', beginTime: '2026-03-05 00:00:00' }] } };
+  if (path === 'activity/presaleOrder/page') return { data: { content: [{ id: 'MO001', presaleId: 'M001', companyCode: 'C001', companyName: '西湖店', goodsTotal: 1, goodsTotalPrice: 100 }] } };
+  if (path === 'activity/presaleOrder/orderStatistics') return { data: { orderQtyTotalCount: 1, goodsQtyTotalCount: 1 } };
+  if (path === 'activity/presale/pickup/manage/activityView/page') return { data: { content: [{ activityId: 'M001', orderQty: 1, pickedQty: 1 }] } };
+  if (path === 'activity/presale/pickup/manage/activityView/pageGather') return { data: { orderQtySum: 1, pickedQtySum: 1 } };
+  if (path === 'activity/presale/pickup/manage/companyView/dealerPage') return { data: { content: [{ companyCode: 'C001', companyName: '西湖店', orderQty: 1, pickedQty: 1 }] } };
+  if (path === 'activity/presale/pickup/manage/companyView/pageGather') return { data: { orderQtySum: 1, pickedQtySum: 1 } };
   if (path === 'hr/mb2bcrd3/getById') return { data: { fid: 'ADDR001', provinceName: '浙江省', cityName: '杭州市', regionName: '西湖区' } };
   if (path.includes('file/asyn/export/b2b/page')) return { data: { records: [{ taskId: 'TASK001', status: '2', downloadUrl: `${baseUrl}/download/file.txt` }] } };
   if (path.includes('downloadTaskFile')) return { data: { taskId: 'TASK001', downloadUrl: `${baseUrl}/download/file.txt` } };
