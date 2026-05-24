@@ -1,5 +1,16 @@
 ## Operations Commands
 
+### ai-replenishment.plan
+
+Plan intelligent replenishment with the CLI-local algorithm and optionally submit direct replenishment orders behind dry-run/confirm gates
+
+- Audience: customer
+- Access: financial
+- Auth: api-token
+- Browser: false
+- Args: --retailer-code, --retailer-id, --company-code, --company-codes, --company-ids, --target-days, --safety-days, --page-size, --max-stores, --submit, --dry-run, --confirm, --invoice-code, --address-id, --skc-out-stock-state, --remark, --reason
+- Columns: summary, rows, orderDryRun, submitSummary, submitDryRun, submitResults
+
 ### report.supply-pickup-activity
 
 Probe supply presale pickup status by activity batch dimension

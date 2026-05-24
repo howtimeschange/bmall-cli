@@ -37,6 +37,7 @@ export function generateCommandDocs(manifestPath: string) {
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as { commands: ManifestCommand[] };
   const documentedCommands = manifest.commands.filter((command) => (
     command.name.startsWith("ops.")
+    || command.name.startsWith("ai-replenishment.")
     || command.name.startsWith("report.")
   ));
   return ["## Operations Commands", "", ...documentedCommands.map(renderCommand)].join("\n");

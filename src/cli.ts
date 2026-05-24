@@ -21,6 +21,7 @@ import { registerExportCommands } from './domains/export/index.js';
 import { registerJobCommands } from './domains/job/index.js';
 import { registerOpsCommands } from './domains/ops/index.js';
 import { registerAgentCommands } from './domains/agent/commands.js';
+import { registerAiReplenishmentCommands } from './domains/ai-replenishment/commands.js';
 import { registerReportCommands } from './domains/report/commands.js';
 import { BmallHttpClient } from './core/http.js';
 import { SessionStore } from './auth/session.js';
@@ -101,6 +102,7 @@ export function registerWorkerCCommands(program: Command, getGlobals: () => Glob
   registerExportCommands(ops, apiClient, emit);
   registerJobCommands(ops, apiClient, undefined, emit, () => getGlobals().configHome);
   registerReportCommands(program, apiClient, output);
+  registerAiReplenishmentCommands(program, apiClient, output);
 }
 
 export function createCli(): Command {

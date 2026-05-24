@@ -8,7 +8,7 @@ Bmall CLI 是 Semir Reabam/Bmall 订货商城的 API-first 命令行客户端。
 
 | 你是谁 | Bmall CLI 能帮你做什么 | 推荐入口 |
 | --- | --- | --- |
-| 普通客户 | 搜商品、查 SKU 和库存、规划订单、校验规则，先 dry-run 预演，并在授权后真实下单。 | `product`、`stock`、`order`、`replenishment`、`pickup` |
+| 普通客户 | 搜商品、查 SKU 和库存、规划订单、智能补货、校验规则，先 dry-run 预演，并在授权后真实下单。 | `product`、`stock`、`order`、`replenishment`、`ai-replenishment`、`pickup` |
 | 系统运维 | 切品牌/门店、查订单链路、排查待审核失败、维护地址、同步 MDM 门店/经销商、查商品主数据、执行商品上新配置、轮询导出任务、运行 allowlist job。 | `company`、`ops order`、`ops address`、`ops store mdm`、`ops retailer mdm`、`ops product`、`ops export task`、`ops job` |
 | AI Agent | 读取 manifest 做能力规划，用 `--json` 拿稳定输出，根据错误码拿确定性排障剧本。 | `manifest`、`agent knowledge`、`agent explain-error` |
 
@@ -22,7 +22,7 @@ Bmall CLI 是 Semir Reabam/Bmall 订货商城的 API-first 命令行客户端。
 | 语言 | TypeScript |
 | CLI bin | `bmall` |
 | 包管理器 | pnpm 9.15.0 |
-| 命令数 | `manifests/bmall.commands.json` 中 134 条命令 |
+| 命令数 | `manifests/bmall.commands.json` 中 156 条命令 |
 | 生产 API | `https://bmall-api.semirapp.com/api` |
 | 生产网页 | `https://bmall.semirapp.com/` |
 | 默认输出 | 人类可读文本；加 `--json` 输出 Agent 友好的 JSON |
@@ -137,6 +137,30 @@ bmall order submit --file order.json --dry-run --json
 bmall order submit --file order.json --confirm --reason "客户确认下单" --json
 ```
 
+### 智能补货
+
+`ai-replenishment plan` 是智能补货的唯一入口。它不再调用旧的 `IntellectAiOrderService` 生成草稿，也不再提供旧算法对比命令；CLI 会直接基于门店现有库存、在途、近 14 天销量、商品标签、订货商城 SKU 库存，生成可解释的补货方案。
+
+支持零售商、单门店、多门店三类范围：
+
+```bash
+bmall ai-replenishment plan --retailer-code 1HLZ2 --json
+bmall ai-replenishment plan --company-code 1HLZ2S0041 --json
+bmall ai-replenishment plan --company-codes 1HLZ2S0041,1HLZ2S0601 --json
+```
+
+需要预演生成订单时加 `--submit --dry-run`，CLI 会查询默认开票主体和完整收货地址，并输出将要调用的 `b2b/order/new/intellectAi/creatOrder` payload，但不会提交：
+
+```bash
+bmall ai-replenishment plan --retailer-code 1HLZ2 --submit --dry-run --json
+```
+
+真实提交属于财务写操作，必须显式授权：
+
+```bash
+bmall ai-replenishment plan --company-code 1HLZ2S0041 --submit --confirm --reason "客户确认智能补货下单" --json
+```
+
 ### 运维排查订单问题
 
 ```bash
@@ -226,6 +250,7 @@ node docs/source-knowledge/scripts/extract-source-knowledge.mjs
 | 购物车 | 查看、加购、移除、清空购物车。 | `cart list`、`cart add`、`cart remove`、`cart clear` | 写操作需要确认和审计。 |
 | 通用订单 | 计划、校验、提交、查询、取消、发货、发票。 | `order plan`、`order validate`、`order submit`、`order get` | 真实提交必须 `--confirm --reason`。 |
 | 订单类型和规则 | 发现订单类型，解释规则链和流程链。 | `order-type list`、`order-rule explain`、`order-flow inspect` | 用于规划和诊断，不代表所有类型都开放真实提交。 |
+| 智能补货 | 按零售商、单门店或多门店生成补货方案，并可在授权后直接生成智能补货订单。 | `ai-replenishment plan` | 唯一入口；真实提交必须 `--submit --confirm --reason`，预演用 `--submit --dry-run`。 |
 | 补货订单 | 普通补货订单 plan、validate、submit、diagnose。 | `replenishment plan`、`replenishment submit` | 写操作受门禁保护。 |
 | 多门店补货 | 多门店补货 plan、validate、submit、diagnose。 | `multi-store-order plan`、`multi-store-order validate` | 适合一个草稿覆盖多个门店。 |
 | 中短期订单 | 查询活动、公司、模型、规则、货品、规则状态和提货列表，并执行校验/提交/诊断。 | `mid-order activity`、`mid-order rules`、`mid-order submit` | 先确认活动和模型，再提交。 |

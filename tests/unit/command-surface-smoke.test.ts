@@ -152,6 +152,7 @@ function buildScenario(name: string): { argv: string[]; expectedExitCode: number
     'company.switch': ['company', 'switch', '--sc-id', 'SC1'],
     'permission.list': ['permission', 'list'],
     'permission.check': ['permission', 'check', '--fun-code', 'b2b:order:create'],
+    'ai-replenishment.plan': ['ai-replenishment', 'plan', '--company-code', 'C001', '--submit', '--dry-run'],
     'report.presale-business': ['report', 'presale-business', '--source', 'mid', '--start-date', '2026-01-01', '--end-date', '2026-05-24', '--output', reportFile],
     'order-type.list': ['order-type', 'list'],
     'order-type.get': ['order-type', 'get', '--type', 'replenishment'],
@@ -305,8 +306,11 @@ function responseFor(path: string, body: unknown): unknown {
   if (path.includes('LoginGroups')) return { ResultInt: 0, DataLine: [{ sgId: 'SG1', groupId: 'G001', groupName: 'Unit Group', groupCode: 'UNIT' }] };
   if (path.includes('ChangeLoginGroup')) return { ResultInt: 0, tokenId: 'group-token', groupId: 'G001', groupName: 'Unit Group', groupCode: 'UNIT' };
   if (path.includes('queryCompanyRole') || path.includes('LoginCompanys')) return { ResultInt: 0, DataLine: [{ scId: 'SC1', companyId: 'C001', companyName: '西湖店', companyCode: 'C001' }] };
-  if (path.includes('ChangeLogin')) return { ResultInt: 0, tokenId: 'company-token', groupId: 'G001', companyId: 'C001', companyName: '西湖店' };
-  if (path === 'hr/mb2bcrd3/list') return { data: [{ fid: 'ADDR001', provinceName: '浙江省', cityName: '杭州市', regionName: '区', conAddress: '文三路 1 号', sourceType: 1 }] };
+  if (path === 'hr/sysCompany/intellectAi/distributorData') return { data: { content: [{ distributorId: '2035721177258699935', distributorCode: '1HLZ2', distributorName: '1HLZ2 零售商' }] } };
+  if (path === 'product/item/intellectAi/getIntellectAiOrderCreateBeforeSkcData') return { data: [{ skcCode: 'SKC001', skuCode: 'SKU001', totalSaleNum7: 14, totalSaleNum7To14: 14, localStock: 0, onRoadStock: 0, labelFlag: 3, ratioSize: 1 }] };
+  if (path === 'warehouse/mWhs/getMainWhsStockBySkuCodes') return { data: { SKU001: 5 } };
+  if (path === 'b2b/invoice/distributorInvoice/list') return { data: [{ invCode: 'INV001', invTitle: '默认开票主体', isDefault: 1 }] };
+  if (path === 'product/mItem/localStockSales/getLocalStockSalesOfSkuCodes') return { data: { skuCodeAndLocalStockMap: { SKU001: 1 }, skuCodeAndSalesQuantityMap: { SKU001: 14 } } };
   if (path === 'activity/presaleActivities/findActivity') return { data: { content: [{ presaleId: 'M001', presaleCode: '202603', presaleName: '26春中短期', beginTime: '2026-03-05 00:00:00' }] } };
   if (path === 'activity/presaleOrder/page') return { data: { content: [{ id: 'MO001', presaleId: 'M001', companyCode: 'C001', companyName: '西湖店', goodsTotal: 1, goodsTotalPrice: 100 }] } };
   if (path === 'activity/presaleOrder/orderStatistics') return { data: { orderQtyTotalCount: 1, goodsQtyTotalCount: 1 } };
@@ -314,6 +318,8 @@ function responseFor(path: string, body: unknown): unknown {
   if (path === 'activity/presale/pickup/manage/activityView/pageGather') return { data: { orderQtySum: 1, pickedQtySum: 1 } };
   if (path === 'activity/presale/pickup/manage/companyView/dealerPage') return { data: { content: [{ companyCode: 'C001', companyName: '西湖店', orderQty: 1, pickedQty: 1 }] } };
   if (path === 'activity/presale/pickup/manage/companyView/pageGather') return { data: { orderQtySum: 1, pickedQtySum: 1 } };
+  if (path.includes('ChangeLogin')) return { ResultInt: 0, tokenId: 'company-token', groupId: 'G001', companyId: 'C001', companyName: '西湖店' };
+  if (path === 'hr/mb2bcrd3/list') return { data: [{ fid: 'ADDR001', provinceName: '浙江省', cityName: '杭州市', regionName: '西湖区', conAddress: '文三路 1 号', consignee: '张三', consiPhone: '13800000000', isDefault: 1, sourceType: 1 }] };
   if (path === 'hr/mb2bcrd3/getById') return { data: { fid: 'ADDR001', provinceName: '浙江省', cityName: '杭州市', regionName: '西湖区' } };
   if (path.includes('file/asyn/export/b2b/page')) return { data: { records: [{ taskId: 'TASK001', status: '2', downloadUrl: `${baseUrl}/download/file.txt` }] } };
   if (path.includes('downloadTaskFile')) return { data: { taskId: 'TASK001', downloadUrl: `${baseUrl}/download/file.txt` } };

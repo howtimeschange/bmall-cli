@@ -483,6 +483,94 @@
       "browser": false,
       "args": [
         {
+          "name": "retailer-code",
+          "type": "str"
+        },
+        {
+          "name": "retailer-id",
+          "type": "str"
+        },
+        {
+          "name": "company-code",
+          "type": "str"
+        },
+        {
+          "name": "company-codes",
+          "type": "csv"
+        },
+        {
+          "name": "company-ids",
+          "type": "csv"
+        },
+        {
+          "name": "target-days",
+          "type": "number"
+        },
+        {
+          "name": "safety-days",
+          "type": "number"
+        },
+        {
+          "name": "page-size",
+          "type": "number"
+        },
+        {
+          "name": "max-stores",
+          "type": "number"
+        },
+        {
+          "name": "submit",
+          "type": "bool"
+        },
+        {
+          "name": "dry-run",
+          "type": "bool"
+        },
+        {
+          "name": "confirm",
+          "type": "bool"
+        },
+        {
+          "name": "invoice-code",
+          "type": "str"
+        },
+        {
+          "name": "address-id",
+          "type": "str"
+        },
+        {
+          "name": "skc-out-stock-state",
+          "type": "number"
+        },
+        {
+          "name": "remark",
+          "type": "str"
+        },
+        {
+          "name": "reason",
+          "type": "str"
+        }
+      ],
+      "columns": [
+        "summary",
+        "rows",
+        "orderDryRun",
+        "submitSummary",
+        "submitDryRun",
+        "submitResults"
+      ],
+      "name": "ai-replenishment.plan",
+      "description": "Plan intelligent replenishment with the CLI-local algorithm and optionally submit direct replenishment orders behind dry-run/confirm gates",
+      "audience": "customer",
+      "access": "financial",
+      "strategy": "api-token"
+    },
+    {
+      "site": "bmall",
+      "domain": "bmall.semirapp.com",
+      "browser": false,
+      "args": [
+        {
           "name": "keyword",
           "type": "str"
         },
