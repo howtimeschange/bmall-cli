@@ -29,10 +29,12 @@ Bmall CLI 是 Semir Reabam/Bmall 订货商城的 API-first 命令行客户端。
 
 ## 近期同步内容
 
-截至 2026-05-24，本地 `main` 分支包含以下待同步到 GitHub 的能力更新：
+截至 2026-05-24，`main` 分支近期同步了以下能力更新：
 
 | 本地提交 | 主题 | 主要内容 |
 | --- | --- | --- |
+| `09d53d8` | CLI 本地智能补货 | 增加 `ai-replenishment plan`，按零售商/门店读取库存、在途、近 14 天销量和商品标签，生成可解释补货方案，并在授权后可直接创建智能补货订单。 |
+| `e3381e3` | 预售业务报表 | 增加 `report presale-business`，把柔供/中短期预售活动、订单、提货、客户进度和金额口径沉淀成 JSON 汇总和 Excel 明细工作簿。 |
 | `35e124a` | 命令面 contract 测试 | 补齐命令 manifest、报表命令、订单和提货安全边界测试，强化 CLI 命令注册与文档契约一致性。 |
 | `ceb33c4` | 源码知识包 | 新增 `docs/source-knowledge/`，沉淀后端、小程序、旧后台和后台 v2 的接口抽取、覆盖报告和业务链路。 |
 | `5bd1749` | MDM 同步与地址维护 | 增加 MDM 同步诊断、地址完整性检查和受控地址 patch 能力，并同步运维 runbook 与命令参考。 |
@@ -265,7 +267,7 @@ node docs/source-knowledge/scripts/extract-source-knowledge.mjs
 | 库存运维 | 查询库存和同步状态。 | `ops stock query`、`ops stock sync-status` | 不暴露任意同步 job。 |
 | 客户/门店/经销商 | 查询客户、门店、经销商基础信息；按编码或更新时间拉取 MDM 暂存数据，比较差异并受控确认到业务档案。 | `ops customer get`、`ops store get`、`ops retailer get`、`ops store mdm sync-by-codes`、`ops retailer mdm confirm` | 基础查询只读；MDM confirm 需要 dry-run 或确认理由。 |
 | IAM | 查询 IAM 用户和角色。 | `ops iam user`、`ops iam role` | 不修改 IAM 权限。 |
-| 业务报表 | 查询柔供提货活动、客户提货进度和客户+SKC 粒度统计。 | `report supply-pickup-activity`、`report supply-pickup-customer`、`report pickup-customer-skc` | 只读报表查询，输出适合 Agent 或表格后处理。 |
+| 业务报表 | 查询柔供提货活动、客户提货进度和客户+SKC 粒度统计，生成柔供/中短期预售业务 JSON 汇总和 Excel 明细工作簿。 | `report supply-pickup-activity`、`report supply-pickup-customer`、`report pickup-customer-skc`、`report presale-business` | 只读报表查询；`presale-business` 会触发系统现有导出任务取金额口径，不改业务状态。 |
 | 异步导出任务 | 查询任务、轮询完成、下载文件。 | `ops export task list`、`ops export task wait`、`ops export task download` | 轮询有超时；下载路径显式指定。 |
 | Allowlist job | 查看和运行 allowlist 中的安全 job。 | `ops job list`、`ops job run` | 禁止通用 `schedule/dowork`。 |
 | 配置与日志缺口 | 明确标识仍需要后端安全 facade 的配置/日志能力。 | `ops config get`、`ops log api` | 返回 `*_REQUIRES_BACKEND_FACADE`，不伪装成功。 |

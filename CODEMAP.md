@@ -48,6 +48,7 @@
 | 路径 | 命令范围 | 说明 |
 | --- | --- | --- |
 | `src/domains/agent/` | `agent explain-error` | 本地确定性错误解释，不调用 LLM。 |
+| `src/domains/ai-replenishment/` | `ai-replenishment plan` | CLI 本地智能补货算法；真实创建订单必须走 `--submit --dry-run` 或 `--submit --confirm --reason`。 |
 | `src/domains/company/` | `company groups/list/switch-group/switch/use` | 多品牌和门店上下文；排查前优先确认。 |
 | `src/domains/product/` | `product search/get/sku/size-ratio/labels` | 客户侧商品读取。 |
 | `src/domains/stock/` | `stock check` | 库存读取。 |
@@ -55,6 +56,7 @@
 | `src/domains/order/` | `order list/get/cancel/delivery/invoice/validate/submit`、`order-type/order-flow/order-rule` | 订单读取、计划、校验、提交和规则解释。 |
 | `src/domains/pending-order/` | `pending-order source-type/detail/review-check/review/cancel` | 待审核单链路；Puma 审核问题重点看这里和 ops address。 |
 | `src/domains/mid-order/`、`supply-presale/`、`pickup/`、`new-store-order/` | 特定订单类型流程 | 多数命令是 API sequence 或受控 dry-run/submit。 |
+| `src/domains/report/` | `report supply-pickup-*`、`report pickup-customer-skc`、`report presale-business` | 预售提货和预售业务报表；`presale-business` 会输出 JSON 汇总和 Excel 工作簿。 |
 | `src/domains/ops/` | `ops order/product/stock/customer/store/retailer/iam/config/log/address` | 运维诊断和受控写操作；不能伪成功。 |
 | `src/domains/export/` | `ops export task *` | 导出任务归一化和下载。 |
 | `src/domains/job/` | `ops job *` | allowlist job list/run。 |
@@ -74,6 +76,7 @@
 | job 执行 | `src/domains/job/`、`manifests/job-allowlist.json` | 后端 schedule 服务和目标 job bean；不能走任意 `schedule/dowork`。 |
 | 柔供/中短期/提货单接口定位 | 未来 `source` domain；当前先看 `docs/source-knowledge/` | `interface-map.md` 查关键接口，`domain-flows.md` 查链路，`full-endpoint-catalog.md` 查全量接口，`bmall-code-knowledge.json` 查证据行号。 |
 | 客户+SKC 提货率报表 | `src/domains/report/`、`src/domains/pickup/` | `docs/source-knowledge/domain-flows.md` 已区分提货单口径和原始订单口径。 |
+| 柔供/中短期预售业务报表 | `src/domains/report/presale-business.ts`、`src/domains/report/presale-workbook.ts` | 汇总活动、订单、提货、客户进度和金额口径；柔供金额依赖系统现有异步导出任务。 |
 
 更多跨仓路线见 `docs/source-code-navigation.md`。
 
