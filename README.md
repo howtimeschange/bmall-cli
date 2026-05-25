@@ -137,9 +137,17 @@ bmall company list --profile semir-prod --env prod --json
 订货商城有多品牌/集团和门店/公司两层上下文。CLI 会复用后端返回的新 `tokenId`，并把新的 `groupId`、品牌信息、门店信息保存回当前 profile。
 
 ```bash
-bmall company switch-group --group-id <GROUP_ID> --json
+bmall company groups --json
+bmall company switch-group --brand 森马 --json
+bmall company list --json
 bmall company switch --company-id <COMPANY_ID> --json
 bmall whoami --json
+```
+
+`company switch-group --brand` 接收品牌名称或品牌编码，例如 `森马`、`巴拉`、`C326`。如果需要精确指定 ID，也可以使用品牌/集团的 `groupId`：
+
+```bash
+bmall company switch-group --group-id <GROUP_ID> --json
 ```
 
 老 Bmall 账号也兼容原系统内部 ID：
@@ -149,7 +157,7 @@ bmall company switch-group --sg-id <SG_ID> --json
 bmall company switch --sc-id <SC_ID> --json
 ```
 
-`company switch` 会真正调用后端切换 token 上下文；`company use` 只修改本地默认下单门店。
+IAM 账号切换品牌时使用 `--brand` 或 `--group-id`；老 Bmall 账号支持 `--brand`、`--group-id` 或 `--sg-id`。`company switch` 会真正调用后端切换 token 上下文；`company use` 只修改本地默认下单门店。
 
 ## 三分钟上手
 
@@ -343,7 +351,7 @@ bmall agent explain-error --error-code 401700000 --json
 
 ```bash
 bmall company groups --json
-bmall company switch-group --group-id <PUMA_GROUP_ID> --json
+bmall company switch-group --brand Puma --json
 bmall company list --sword "<门店关键字>" --json
 bmall company switch --company-id <COMPANY_ID> --json
 bmall ops order diagnose-pending --order-id <PENDING_ORDER_ID> --json
