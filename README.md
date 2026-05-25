@@ -42,7 +42,39 @@ Bmall CLI 是 Semir Reabam/Bmall 订货商城的 API-first 命令行客户端。
 
 ## 快速安装
 
-当前推荐从 GitHub 源码安装：
+推荐一键源码安装。脚本会把仓库安装到 `~/.bmall-cli/app`，安装依赖、构建并注册全局 `bmall` 命令；重复执行时会自动拉取 `main` 最新代码并重新构建。
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/howtimeschange/bmall-cli/main/scripts/install.sh | bash
+```
+
+验证：
+
+```bash
+bmall version --json
+```
+
+如果要指定安装目录或分支：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/howtimeschange/bmall-cli/main/scripts/install.sh | \
+  BMALL_CLI_INSTALL_DIR="$HOME/tools/bmall-cli" BMALL_CLI_BRANCH=main bash
+```
+
+也可以直接用 npm 从 GitHub 全局安装。这个方式会在安装时构建 TypeScript，不需要手动 clone：
+
+```bash
+npm install -g github:howtimeschange/bmall-cli
+bmall version --json
+```
+
+如果后续发布到 npm registry，命令会简化为：
+
+```bash
+npm install -g bmall-cli
+```
+
+手动源码安装作为备用：
 
 ```bash
 git clone https://github.com/howtimeschange/bmall-cli.git
@@ -63,9 +95,7 @@ node dist/cli.js version --json
 日常更新：
 
 ```bash
-git pull
-pnpm install
-pnpm build
+curl -fsSL https://raw.githubusercontent.com/howtimeschange/bmall-cli/main/scripts/install.sh | bash
 ```
 
 ## 第一次使用

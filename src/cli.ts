@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { realpathSync } from 'node:fs';
 import { Command } from 'commander';
 import pino from 'pino';
 import { ConfigManager } from './core/config.js';
@@ -192,6 +193,11 @@ export async function run(argv = process.argv): Promise<void> {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+function isEntrypoint(metaUrl: string, argvPath: string | undefined): boolean {
+  if (!argvPath) return false;
+  return realpathSync(new URL(metaUrl)) === realpathSync(argvPath);
+}
+
+if (isEntrypoint(import.meta.url, process.argv[1])) {
   void run();
 }

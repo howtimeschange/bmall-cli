@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { authorizeWriteGate, auditOperation, dryRunPlan } from "../ops/safety.js";
 
 export interface JobAllowlistEntry {
@@ -16,7 +17,7 @@ export interface JobAllowlistEntry {
 }
 
 export function defaultAllowlistPath(): string {
-  return join(process.cwd(), "manifests", "job-allowlist.json");
+  return resolve(dirname(fileURLToPath(import.meta.url)), "../../../manifests/job-allowlist.json");
 }
 
 export function loadJobAllowlist(filePath = defaultAllowlistPath()): JobAllowlistEntry[] {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { listJobs, runJob, selectRunnableJob, type JobAllowlistEntry } from "../../src/domains/job/commands.js";
+import { existsSync } from "node:fs";
+import { listJobs, runJob, selectRunnableJob, defaultAllowlistPath, type JobAllowlistEntry } from "../../src/domains/job/commands.js";
 
 const jobs: JobAllowlistEntry[] = [
   {
@@ -24,6 +25,11 @@ const jobs: JobAllowlistEntry[] = [
 ];
 
 describe("job allowlist", () => {
+  it("loads the bundled allowlist independent of the current working directory", () => {
+    expect(defaultAllowlistPath()).toContain("manifests/job-allowlist.json");
+    expect(existsSync(defaultAllowlistPath())).toBe(true);
+  });
+
   it("lists only allowlist entries and filters by module", () => {
     expect(listJobs(jobs)).toHaveLength(2);
     expect(listJobs(jobs, "order").map((job) => job.jobId)).toEqual(["orderDailyStatJob"]);
