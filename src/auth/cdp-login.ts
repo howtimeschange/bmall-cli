@@ -131,8 +131,17 @@ async function findOrCreateBmallPage(host: string, port: number, loginUrl: strin
   const pages = await listPages(host, port);
   const existing = pages.find((page) => page.type === 'page' && page.url?.startsWith(origin));
   if (existing) return existing;
-  const created = await fetchCdpJson<CdpPage>(host, port, `/json/new?${encodeURIComponent(loginUrl)}`);
-  return created;
+  return await createBmallPage(host, port, loginUrl);
+}
+
+async function createBmallPage(host: string, port: number, loginUrl: string): Promise<CdpPage> {
+  const path = `/json/new?${encodeURIComponent(loginUrl)}`;
+  try {
+    return await fetchCdpJson<CdpPage>(host, port, path, { method: 'PUT' });
+  } catch (error) {
+    if (!isCdpMethodUnsupported(error)) throw error;
+    return await fetchCdpJson<CdpPage>(host, port, path);
+  }
 }
 
 async function listPages(host: string, port: number): Promise<CdpPage[]> {
@@ -146,10 +155,14 @@ async function listPages(host: string, port: number): Promise<CdpPage[]> {
   }
 }
 
-async function fetchCdpJson<T>(host: string, port: number, path: string): Promise<T> {
-  const response = await fetch(`http://${host}:${port}${path}`);
+async function fetchCdpJson<T>(host: string, port: number, path: string, init: RequestInit = {}): Promise<T> {
+  const response = await fetch(`http://${host}:${port}${path}`, init);
   if (!response.ok) throw new Error(`CDP ${path} returned HTTP ${response.status}`);
   return response.json() as Promise<T>;
+}
+
+function isCdpMethodUnsupported(error: unknown): boolean {
+  return error instanceof Error && /\bHTTP (404|405)\b/.test(error.message);
 }
 
 async function evaluateCdp(webSocketUrl: string, expression: string): Promise<unknown> {

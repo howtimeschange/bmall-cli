@@ -194,6 +194,74 @@ describe('auth import-token command', () => {
     }
   });
 
+  it('creates a new CDP Bmall tab with PUT when no Bmall tab is open', async () => {
+    const newTabMethods: string[] = [];
+    const server = createServer((req, res) => {
+      if (req.url === '/json/list') {
+        res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify([]));
+        return;
+      }
+      if (req.url?.startsWith('/json/new')) {
+        newTabMethods.push(req.method ?? '');
+        if (req.method !== 'PUT') {
+          res.writeHead(405).end();
+          return;
+        }
+        const port = (server.address() as { port: number }).port;
+        res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({
+          type: 'page',
+          url: 'https://bmall.semirapp.com/',
+          webSocketDebuggerUrl: `ws://127.0.0.1:${port}/devtools/page/created`
+        }));
+        return;
+      }
+      res.writeHead(404).end();
+    });
+    server.on('upgrade', (req, socket) => {
+      const key = req.headers['sec-websocket-key'];
+      if (typeof key !== 'string') {
+        socket.destroy();
+        return;
+      }
+      const accept = createHash('sha1').update(`${key}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`).digest('base64');
+      socket.write([
+        'HTTP/1.1 101 Switching Protocols',
+        'Upgrade: websocket',
+        'Connection: Upgrade',
+        `Sec-WebSocket-Accept: ${accept}`,
+        '',
+        ''
+      ].join('\r\n'));
+      socket.on('data', (chunk) => {
+        const request = JSON.parse(decodeClientFrame(chunk));
+        socket.write(encodeServerFrame(JSON.stringify({
+          id: request.id,
+          result: {
+            result: {
+              type: 'object',
+              value: {
+                tokenId: 'created-tab-token',
+                groupId: 'G2',
+                groupName: '巴拉',
+                permissions: [],
+                menuData: []
+              }
+            }
+          }
+        })));
+      });
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    try {
+      const port = (server.address() as { port: number }).port;
+      const result = await readTokenBundleFromCdp({ port, loginUrl: 'https://bmall.semirapp.com/' });
+      expect(result.bundle).toMatchObject({ tokenId: 'created-tab-token', groupId: 'G2', groupName: '巴拉' });
+      expect(newTabMethods).toEqual(['PUT']);
+    } finally {
+      server.close();
+    }
+  });
+
   it('requires an explicit account system for account/password login', async () => {
     const home = await mkdtemp(join(tmpdir(), 'bmall-auth-account-type-'));
     const program = new Command();
