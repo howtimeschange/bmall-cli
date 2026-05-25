@@ -28,6 +28,8 @@
 | `endpoint-coverage.md` | 前后端覆盖报告。区分“后端+前端均有证据”“仅后端”“仅前端”。 |
 | `interface-map.md` | 人读接口地图。按业务域列关键接口、页面入口和请求封装。 |
 | `domain-flows.md` | 柔供、中短期、提货单、客户+SKC 视角的端到端流程和口径。 |
+| `brand-groups.json` | 当前账号可见品牌组速查表。只保留 `groupName`、`groupCode`、`groupId` 和常用识别词，供 CLI/Agent 快速切换品牌。 |
+| `brand-groups.md` | 人读版品牌组速查表。 |
 | `scripts/extract-source-knowledge.mjs` | 可复跑静态抽取脚本。一次生成 JSON、CSV、全量目录和覆盖报告，后续可迁入 `bmall-cli source-explorer`。 |
 
 ## 当前抽取统计

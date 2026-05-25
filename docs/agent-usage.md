@@ -18,13 +18,13 @@ Bmall 是多品牌系统。做订单、商品、库存或排障前，先确认�
 
 ```bash
 bmall company groups --json
-bmall company switch-group --group-id <groupId> --json
+bmall company switch-group --brand <品牌名称或编码> --json
 bmall company list --json
 bmall company switch --company-id <companyId> --json
 bmall whoami --json
 ```
 
-CLI 会根据 token bundle 自动判断账号类型：老 Bmall 账号走 `manage/app/Common/*`，IAM 账号走 `hr/iamUser/*`。Agent 优先使用稳定的 `groupId/companyId`；只有人工从老后台拿到了内部 ID 时，才使用 `--sg-id` 或 `--sc-id`。
+CLI 会根据 token bundle 自动判断账号类型：老 Bmall 账号走 `manage/app/Common/*`，IAM 账号走 `hr/iamUser/*`。Agent 优先用 `--brand` 传人可读的品牌名称或编码，例如 `--brand 巴拉`、`--brand C328`；如果匹配不唯一，再使用稳定的 `groupId/companyId`。只有人工从老后台拿到了内部 ID 时，才使用 `--sg-id` 或 `--sc-id`。
 
 ## Operations Pattern
 
@@ -99,7 +99,7 @@ Order submit must be treated as financial. Without a real API runtime, even `--c
 bmall agent knowledge --json
 bmall agent explain-error --error-code 401700000 --json
 bmall company groups --json
-bmall company switch-group --group-id <PUMA_GROUP_ID> --json
+bmall company switch-group --brand PUMAKIDS --json
 bmall company list --sword "<门店关键字>" --json
 bmall company switch --company-id <COMPANY_ID> --json
 bmall ops order diagnose-pending --order-id <PENDING_ORDER_ID> --json

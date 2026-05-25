@@ -433,6 +433,11 @@
           "name": "group-id",
           "type": "str",
           "required": false
+        },
+        {
+          "name": "brand",
+          "type": "str",
+          "required": false
         }
       ],
       "columns": [
@@ -442,7 +447,7 @@
         "bundle"
       ],
       "name": "company.switch-group",
-      "description": "Switch active brand group and save the returned token bundle; BMALL supports sgId or groupId, IAM uses groupId",
+      "description": "Switch active brand group and save the returned token bundle; BMALL supports sgId, groupId, or brand name/code; IAM supports groupId or brand name/code",
       "audience": "customer",
       "access": "write",
       "strategy": "api-token"

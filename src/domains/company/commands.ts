@@ -57,7 +57,7 @@ export function registerCompanyCommands(program: Command, getGlobals: () => Glob
     emit(success(resolved, { accountType: accountType(bundle), count: groups.length, groups }, { source: 'api', durationMs: response.durationMs }), globals.json);
   });
 
-  company.command('switch-group').description('Switch active brand group and save the returned token').option('--sg-id <id>', 'SysStaffGroup sgId from company groups').option('--group-id <id>', 'brand groupId').action(async (opts) => {
+  company.command('switch-group').description('Switch active brand group and save the returned token').option('--sg-id <id>', 'SysStaffGroup sgId from company groups').option('--group-id <id>', 'brand groupId').option('--brand <nameOrCode>', 'brand group name or code').action(async (opts) => {
     const globals = getGlobals();
     const config = new ConfigManager(globals.configHome);
     const resolved = await config.resolve(globals);
@@ -125,19 +125,21 @@ interface CompanyTarget {
   companyCode?: string;
 }
 
-async function resolveGroupTarget(client: BmallHttpClient, bundle: TokenBundle, opts: { sgId?: string; groupId?: string }): Promise<GroupTarget> {
+async function resolveGroupTarget(client: BmallHttpClient, bundle: TokenBundle, opts: { sgId?: string; groupId?: string; brand?: string }): Promise<GroupTarget> {
   if (isIamBundle(bundle)) {
+    if (opts.brand) return resolveGroupByBrand(client, bundle, opts.brand);
     if (!opts.groupId) {
       throw new BmallCliError('INPUT_ERROR', 'IAM brand switching requires --group-id.', {
-        recover: 'Run `bmall company groups --json`, then pass the groupId to `bmall company switch-group --group-id <id>`.'
+        recover: 'Run `bmall company groups --json`, then pass the groupId, or use `bmall company switch-group --brand <name-or-code>`.'
       });
     }
     return { groupId: opts.groupId };
   }
+  if (opts.brand) return resolveGroupByBrand(client, bundle, opts.brand);
   if (opts.sgId) return { sgId: opts.sgId, groupId: opts.groupId };
   if (!opts.groupId) {
     throw new BmallCliError('INPUT_ERROR', 'Use --sg-id or --group-id for brand switching.', {
-      recover: 'Run `bmall company groups --json`, then pass sgId or groupId.'
+      recover: 'Run `bmall company groups --json`, then pass sgId/groupId, or use `bmall company switch-group --brand <name-or-code>`.'
     });
   }
   const response = await client.send({
@@ -160,6 +162,69 @@ async function resolveGroupTarget(client: BmallHttpClient, bundle: TokenBundle, 
     groupName: stringValue(group.groupName),
     groupCode: stringValue(group.groupCode)
   };
+}
+
+async function resolveGroupByBrand(client: BmallHttpClient, bundle: TokenBundle, brand: string): Promise<GroupTarget> {
+  const keyword = brand.trim();
+  if (!keyword) {
+    throw new BmallCliError('INPUT_ERROR', '--brand cannot be empty.', {
+      recover: 'Pass a brand name or code, for example `--brand 巴拉` or `--brand C328`.'
+    });
+  }
+  const iam = isIamBundle(bundle);
+  const response = await client.send({
+    method: 'POST',
+    path: iam ? 'hr/iamUser/groupList' : 'manage/app/Common/LoginGroups',
+    body: iam ? {} : { sword: '' },
+    auth: { injectAuthToBody: true }
+  });
+  const groups = extractRows(response.data);
+  const exact = groups.filter((group) => groupMatchesBrand(group, keyword, true));
+  const matches = exact.length > 0 ? exact : groups.filter((group) => groupMatchesBrand(group, keyword, false));
+  if (matches.length === 0) {
+    throw new BmallCliError('INPUT_ERROR', `No login brand matched "${keyword}".`, {
+      recover: 'Run `bmall company groups --json` to inspect available groupName/groupCode/groupId values.'
+    });
+  }
+  if (matches.length > 1) {
+    const choices = matches.map(formatGroupChoice).join(', ');
+    throw new BmallCliError('INPUT_ERROR', `Brand "${keyword}" matched multiple login groups: ${choices}.`, {
+      recover: 'Use an exact --brand value, or pass --group-id/--sg-id from `bmall company groups --json`.'
+    });
+  }
+  const group = matches[0];
+  const groupId = stringValue(group.groupId);
+  const sgId = stringValue(group.sgId);
+  if (!iam && !sgId) {
+    throw new BmallCliError('INPUT_ERROR', `Matched brand "${keyword}" does not include sgId.`, {
+      recover: 'Run `bmall company groups --json` and pass an available --sg-id.'
+    });
+  }
+  return {
+    sgId,
+    groupId,
+    groupName: stringValue(group.groupName),
+    groupCode: stringValue(group.groupCode)
+  };
+}
+
+function groupMatchesBrand(group: Record<string, unknown>, keyword: string, exact: boolean): boolean {
+  const normalizedKeyword = normalizeText(keyword);
+  return [group.groupName, group.groupCode, group.groupId, group.sgId]
+    .map((value) => normalizeText(stringValue(value) ?? ''))
+    .filter(Boolean)
+    .some((value) => exact ? value === normalizedKeyword : value.includes(normalizedKeyword));
+}
+
+function normalizeText(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function formatGroupChoice(group: Record<string, unknown>): string {
+  const name = stringValue(group.groupName) ?? 'unknown';
+  const code = stringValue(group.groupCode);
+  const groupId = stringValue(group.groupId);
+  return [name, code, groupId].filter(Boolean).join('/');
 }
 
 async function resolveCompanyTarget(client: BmallHttpClient, bundle: TokenBundle, opts: { scId?: string; companyId?: string }): Promise<CompanyTarget> {

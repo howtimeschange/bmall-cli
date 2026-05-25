@@ -484,6 +484,79 @@ describe('company brand and group switching', () => {
     }
   });
 
+  it('switches IAM login group by brand name after resolving groupId from group list', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'bmall-company-iam-switch-group-by-brand-'));
+    await new ConfigManager(home).updateProfile('unit', { env: 'local', loginUrl: 'http://127.0.0.1:3000/' });
+    await new SessionStore(undefined, home).save('unit', {
+      tokenId: 'old-iam-token',
+      groupId: 'SEMIR',
+      userId: '1001',
+      userName: 'IAM User',
+      loginActiveTabName: 'iam',
+      permissions: [],
+      menuData: []
+    });
+    const requests: Array<{ url: string; body: unknown }> = [];
+    const server = createServer((req, res) => {
+      const chunks: Buffer[] = [];
+      req.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+      req.on('end', () => {
+        requests.push({ url: req.url ?? '', body: JSON.parse(Buffer.concat(chunks).toString('utf8')) });
+        if (req.url === '/api/hr/iamUser/groupList') {
+          res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({
+            code: '200',
+            data: [
+              { groupId: '0', groupName: '巴拉巴拉', groupCode: 'C328' },
+              { groupId: 'SEMIR', groupName: '森马', groupCode: 'C326' }
+            ]
+          }));
+          return;
+        }
+        res.writeHead(200, { 'content-type': 'application/json' }).end(JSON.stringify({
+          code: '200',
+          data: {
+            tokenId: 'bala-iam-token',
+            userId: '1001',
+            userName: 'IAM User',
+            groupInfo: { groupId: '0', groupName: '巴拉巴拉', groupCode: 'C328' },
+            roleFunctionList: [{ funCode: 'pending:order:review' }]
+          }
+        }));
+      });
+    });
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const baseUrl = `http://127.0.0.1:${(server.address() as { port: number }).port}/api`;
+    await new ConfigManager(home).updateProfile('unit', { baseUrl });
+    const { program, outputs } = createProgram(home);
+
+    try {
+      await program.parseAsync(['node', 'bmall', '--config-home', home, '--profile', 'unit', '--json', 'company', 'switch-group', '--brand', '巴拉']);
+      expect(requests.map((item) => item.url)).toEqual([
+        '/api/hr/iamUser/groupList',
+        '/api/hr/iamUser/login/changeGroup'
+      ]);
+      expect(requests[1]).toMatchObject({
+        body: { tokenId: 'old-iam-token', groupId: '0' }
+      });
+      await expect(new SessionStore(undefined, home).require('unit')).resolves.toMatchObject({
+        tokenId: 'bala-iam-token',
+        groupId: '0',
+        groupName: '巴拉巴拉',
+        groupCode: 'C328'
+      });
+      expect(outputs[0]).toMatchObject({
+        ok: true,
+        data: {
+          accountType: 'iam',
+          switched: true,
+          group: { groupId: '0', groupName: '巴拉巴拉', groupCode: 'C328' }
+        }
+      });
+    } finally {
+      server.close();
+    }
+  });
+
   it('switches IAM login company using companyId and persists company context', async () => {
     const home = await mkdtemp(join(tmpdir(), 'bmall-company-iam-switch-company-'));
     await new ConfigManager(home).updateProfile('unit', { env: 'local', loginUrl: 'http://127.0.0.1:3000/' });

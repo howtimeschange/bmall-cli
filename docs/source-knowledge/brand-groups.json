@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-05-25T14:40:56+08:00",
+  "source": {
+    "command": "bmall company groups --json",
+    "profile": "semir-report",
+    "env": "prod",
+    "accountType": "iam"
+  },
+  "usage": {
+    "preferredSwitchCommand": "bmall company switch-group --brand <groupName-or-groupCode> --json",
+    "fallbackSwitchCommand": "bmall company switch-group --group-id <groupId> --json"
+  },
+  "groups": [
+    {
+      "groupName": "巴拉巴拉",
+      "groupCode": "C328",
+      "groupId": "0",
+      "aliases": ["巴拉", "巴拉巴拉", "bala", "balabala", "C328"]
+    },
+    {
+      "groupName": "MOP",
+      "groupCode": "C361",
+      "groupId": "30963c13eeb04c9a8b21f141e3a188ea",
+      "aliases": ["MOP", "mop", "C361"]
+    },
+    {
+      "groupName": "森马",
+      "groupCode": "C326",
+      "groupId": "5540c8f30a114bf8992c555cc57d9b26",
+      "aliases": ["森马", "semir", "C326"]
+    },
+    {
+      "groupName": "ASICS",
+      "groupCode": "C333",
+      "groupId": "667243d205974f779f3a9ceb364acdd9",
+      "aliases": ["ASICS", "asics", "亚瑟士", "C333"]
+    },
+    {
+      "groupName": "PUMAKIDS",
+      "groupCode": "C335",
+      "groupId": "85126a2658ba4d0b9b7f40e4d40bd2b9",
+      "aliases": ["PUMAKIDS", "pumakids", "PUMA", "puma", "C335"]
+    },
+    {
+      "groupName": "MiniBala",
+      "groupCode": "C323",
+      "groupId": "c4613ad70ac649f389baf3b8793946f1",
+      "aliases": ["MiniBala", "minibala", "迷你巴拉", "C323"]
+    },
+    {
+      "groupName": "森马儿童",
+      "groupCode": "C325",
+      "groupId": "f931567b8752484e8e9ffbc35bc57cea",
+      "aliases": ["森马儿童", "semirkids", "C325"]
+    }
+  ]
+}
