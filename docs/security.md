@@ -19,7 +19,11 @@ Write operations must use either `--dry-run` or an explicit authorization path. 
 
 ## Browser Policy
 
-Operations, export, and job commands are API-first. Manifest entries set `browser: false`. Browser login bootstrap may be implemented by auth, but these business commands must not read DOM, automate pages, intercept browser traffic, or depend on screenshots.
+Operations, export, and job commands are API-first. Manifest entries set `browser: false`. Browser or Chrome CDP login bootstrap may be implemented by auth, but these business commands must not read DOM, automate pages, intercept browser traffic, or depend on screenshots.
+
+## Password Login Policy
+
+Account/password login must be routed by an explicit account system. Use `--account-type bmall` for the original ordering-mall account and `--account-type iam` for the IAM user-center account. IAM password login must resolve the backend `groupId` from a user-facing brand name/code or saved profile context, rather than asking humans to type internal IDs. The CLI must reject password login without an account-system choice, so credentials are not sent to the wrong login endpoint.
 
 ## Job Policy
 

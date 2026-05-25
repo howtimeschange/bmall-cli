@@ -181,6 +181,38 @@
           "type": "bool"
         },
         {
+          "name": "cdp",
+          "type": "bool"
+        },
+        {
+          "name": "cdp-host",
+          "type": "str"
+        },
+        {
+          "name": "cdp-port",
+          "type": "number"
+        },
+        {
+          "name": "cdp-launch",
+          "type": "bool"
+        },
+        {
+          "name": "cdp-user-data-dir",
+          "type": "path"
+        },
+        {
+          "name": "chrome-path",
+          "type": "path"
+        },
+        {
+          "name": "account-type",
+          "type": "enum:bmall|iam"
+        },
+        {
+          "name": "brand",
+          "type": "str"
+        },
+        {
           "name": "account",
           "type": "str"
         },
@@ -196,10 +228,11 @@
       "columns": [
         "profile",
         "env",
-        "callbackUrl"
+        "saved",
+        "loginInfo"
       ],
       "name": "auth.login",
-      "description": "Login with browser-assisted loopback or account/password form",
+      "description": "Login with browser-assisted loopback, Chrome CDP token pickup, or account/password form",
       "audience": "core",
       "access": "read",
       "strategy": "api-login",

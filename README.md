@@ -72,7 +72,27 @@ pnpm build
 
 ### 1. 登录
 
-推荐使用浏览器辅助登录。CLI 会打开 Bmall 登录页，登录完成后通过本地 loopback 接收 token bundle，并保存到当前 profile。
+推荐使用 Chrome CDP 登录。CLI 会连接或启动带调试端口的 Chrome，从已登录的 Bmall 页面读取 token bundle，并保存到当前 profile。
+
+```bash
+bmall auth login --browser --cdp --env prod --profile semir-prod --json
+```
+
+如果 `9222` 端口已经有调试 Chrome，CLI 会复用里面的已登录页面。也可以让 CLI 启动一个独立调试 Chrome：
+
+```bash
+bmall auth login --browser --cdp --cdp-launch --env prod --profile semir-prod --json
+```
+
+`--cdp-launch` 会使用 CLI 自己的独立浏览器 profile（默认在 `~/.bmall-cli/chrome-profile`），不影响你日常已经打开的 Chrome。第一次需要在这个专用 Chrome 里登录 Bmall；之后登录态会留在这个 profile 中，CLI 可自动复用。
+
+也可以手动启动独立 profile：
+
+```bash
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-bmall-cli https://bmall.semirapp.com/
+```
+
+如果 CDP 不可用，还可以使用原始 loopback 方式。CLI 会输出一次性的 `consoleSnippet` / `bookmarklet`，登录后在 Bmall 页面执行它，把 token bundle 发回本机：
 
 ```bash
 bmall auth login --browser --env prod --profile semir-prod --json
@@ -84,6 +104,18 @@ bmall auth login --browser --env prod --profile semir-prod --json
 bmall auth import-token --env prod --profile semir-prod --from-file ./token-bundle.json --json
 bmall whoami --profile semir-prod --env prod --json
 ```
+
+账号密码登录需要明确选择账号体系，避免把同一个手机号误发到另一套登录接口：
+
+```bash
+# 原订货商城账号
+bmall auth login --account-type bmall --account <手机号> --password '<密码>' --env prod --profile semir-prod --json
+
+# IAM 用户中心账号
+bmall auth login --account-type iam --brand 森马 --account <手机号> --password '<密码>' --env prod --profile semir-prod --json
+```
+
+IAM 登录需要品牌上下文。`--brand` 接收用户熟悉的品牌名称或品牌编码，例如 `森马` 或 `C326`；如果当前 profile 已保存过品牌上下文，也可以省略，CLI 会自动复用。若不确定账号属于哪一套，优先使用 CDP 登录；CLI 会直接读取已登录页面里的 token bundle。
 
 支持单次命令环境变量覆盖：
 

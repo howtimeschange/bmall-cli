@@ -138,7 +138,7 @@ function buildScenario(name: string): { argv: string[]; expectedExitCode: number
     'manifest.list': ['manifest', 'list'],
     'manifest.get': ['manifest', 'get', 'version'],
     'auth.import-token': ['auth', 'import-token', '--token', 'smoke-token', '--skip-verify'],
-    'auth.login': ['auth', 'login', '--account', 'user', '--password', 'pass', '--skip-verify'],
+    'auth.login': ['auth', 'login', '--account-type', 'bmall', '--account', 'user', '--password', 'pass', '--skip-verify'],
     'auth.doctor': ['auth', 'doctor'],
     'auth.renew': ['auth', 'renew'],
     'auth.logout': ['auth', 'logout'],

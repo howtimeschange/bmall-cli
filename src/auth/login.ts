@@ -1,9 +1,17 @@
 import { createServer } from 'node:http';
-import { randomBytes } from 'node:crypto';
+import { constants, createHash, publicEncrypt, randomBytes } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { BmallCliError } from '../core/errors.js';
 import { type TokenBundle, TokenBundleSchema } from './token-bundle.js';
 import { BmallHttpClient } from '../core/http.js';
+
+export type AccountLoginType = 'bmall' | 'iam';
+
+const IAM_PASSWORD_PUBLIC_KEY = [
+  '-----BEGIN PUBLIC KEY-----',
+  'MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArODjK8hG+5vq37/CN5XbBogMOP7mvEnl/glBljS8kaIKdG2npKiIHIlfbbzIzzXjqb1xsEJ00CtCtmPPmxeBCVYHev4Nl0SxZEiXm4XeHTurLmIcLV5quGyPaDVh3K726TujAmNgxQVTBtgOUDJVp9gTyHTPcPUUdxQGKlDUX3y010El4sCdsBGuRauV/pL5cLQpIJVJIwd6SG+t/r9Z94d4zXQAfW3qD/KrN6ZBKKivp0O0r4oicrnBf44Xt4MxSAs6+4TvdxD1CewGmY8vdZME1DhJRkbeiUKJDOMlnw4BzlZkLmlEo4gsmCLnrS2JQeYX74x48XCOODskJGol/QIDAQAB',
+  '-----END PUBLIC KEY-----'
+].join('\n');
 
 export interface BrowserLoginInfo {
   state: string;
@@ -73,13 +81,76 @@ export function openBrowser(url: string): void {
   spawn('open', [url], { stdio: 'ignore', detached: true }).unref();
 }
 
-export async function loginWithPassword(baseUrl: string, account: string, password: string): Promise<TokenBundle> {
+export interface PasswordLoginOptions {
+  groupId?: string;
+}
+
+export async function loginWithPassword(baseUrl: string, account: string, password: string, accountType: AccountLoginType, options: PasswordLoginOptions = {}): Promise<TokenBundle> {
   const client = new BmallHttpClient(baseUrl);
+  if (accountType === 'iam') {
+    if (!options.groupId) {
+      throw new BmallCliError('INPUT_ERROR', 'IAM 用户中心账号登录需要先选择品牌：请使用 --brand <品牌名称或品牌编码>，例如 --brand 森马 或 --brand C326。');
+    }
+    const response = await client.send<Record<string, unknown>>({
+      method: 'POST',
+      path: 'hr/iamUser/mini/login',
+      body: { groupId: options.groupId, mobile: account, password: encryptIamPassword(password) },
+      auth: { injectAuthToBody: false }
+    });
+    return mapIamLoginBundle(response.data);
+  }
   const response = await client.send<Record<string, unknown>>({
     method: 'POST',
     path: 'manage/app/Common/Login',
-    body: { account, password },
+    body: {
+      mobile: account,
+      loginWord: md5(password),
+      loginType: 'b2bmall',
+      wxSn: ''
+    },
     auth: { injectAuthToBody: false }
   });
-  return TokenBundleSchema.parse(response.data);
+  return mapBmallLoginBundle(response.data, response.raw);
+}
+
+export function parseAccountLoginType(value: unknown): AccountLoginType {
+  if (value === 'bmall' || value === 'iam') return value;
+  throw new BmallCliError('INPUT_ERROR', '账号密码登录需要先明确账号体系：请添加 --account-type bmall（原订货商城账号）或 --account-type iam（IAM 用户中心账号）。');
+}
+
+function mapBmallLoginBundle(data: unknown, raw: unknown): TokenBundle {
+  const rawObj = raw && typeof raw === 'object' ? raw as Record<string, unknown> : {};
+  return TokenBundleSchema.parse(data && typeof data === 'object' && 'tokenId' in data ? data : rawObj.DataLine ?? rawObj.data ?? rawObj);
+}
+
+function mapIamLoginBundle(data: unknown): TokenBundle {
+  const obj = data && typeof data === 'object' ? data as Record<string, unknown> : {};
+  const groupInfo = obj.groupInfo && typeof obj.groupInfo === 'object' ? obj.groupInfo as Record<string, unknown> : {};
+  return TokenBundleSchema.parse({
+    tokenId: obj.tokenId,
+    groupId: obj.groupId ?? groupInfo.groupId,
+    groupName: obj.groupName ?? groupInfo.groupName,
+    groupCode: obj.groupCode ?? groupInfo.groupCode,
+    userId: obj.userId,
+    userName: obj.userName,
+    mobile: obj.mobile ?? obj.userMobile,
+    roleCode: obj.roleCode,
+    loginActiveTabName: 'iam',
+    permissions: Array.isArray(obj.roleFunctionList) ? obj.roleFunctionList : [],
+    menuData: Array.isArray(obj.roleMenuList) ? obj.roleMenuList : []
+  });
+}
+
+function encryptIamPassword(password: string): string {
+  const bytes = Buffer.from(password, 'utf8');
+  const maxChunkSize = 245;
+  const encrypted: Buffer[] = [];
+  for (let offset = 0; offset < bytes.length; offset += maxChunkSize) {
+    encrypted.push(publicEncrypt({ key: IAM_PASSWORD_PUBLIC_KEY, padding: constants.RSA_PKCS1_PADDING }, bytes.subarray(offset, offset + maxChunkSize)));
+  }
+  return Buffer.concat(encrypted).toString('base64');
+}
+
+function md5(value: string): string {
+  return createHash('md5').update(value).digest('hex');
 }

@@ -1,6 +1,6 @@
 # Bmall CLI Agent Usage
 
-The Bmall CLI is API-first. Business commands do not use browser automation, DOM reading, screenshots, CDP, or network interception. Browser usage is limited to interactive login bootstrap handled by the auth domain.
+The Bmall CLI is API-first. Business commands do not use browser automation, DOM reading, screenshots, CDP, or network interception. Browser/CDP usage is limited to interactive login bootstrap handled by the auth domain.
 
 Agents should discover supported commands from `manifests/bmall.commands.json`. Every command declares `audience`, `access`, `auth`, `browser`, `args`, and output `columns`.
 
@@ -56,6 +56,29 @@ bmall ops job list --module order --json
 `schedule/dowork` is not exposed as a generic command. A job can dry-run only when it is enabled in `manifests/job-allowlist.json`; an actual run also requires `--confirm --reason`.
 
 `auth.renew` is implemented and renews the saved token through `manage/app/token/renewal`.
+
+For login bootstrap, prefer an attached Chrome CDP session when available:
+
+```bash
+bmall auth login --browser --cdp --cdp-port 9222 --profile semir-prod --env prod --json
+```
+
+If no CDP Chrome is running, `--cdp-launch` starts a dedicated debug Chrome with an isolated profile under the CLI config directory. It does not affect the user's normal Chrome windows. The user logs in once in that dedicated browser, and the profile keeps the session for later CLI runs:
+
+```bash
+bmall auth login --browser --cdp --cdp-launch --profile semir-prod --env prod --json
+```
+
+If CDP is unavailable, fall back to `bmall auth login --browser`, then execute the emitted one-time `consoleSnippet` in the logged-in Bmall page.
+
+Account/password login supports both user systems, but the user must choose the system explicitly:
+
+```bash
+bmall auth login --account-type bmall --account <mobile> --password '<password>' --profile semir-prod --env prod --json
+bmall auth login --account-type iam --brand 森马 --account <mobile> --password '<password>' --profile semir-prod --env prod --json
+```
+
+Use `bmall` for the original ordering-mall account and `iam` for the IAM user-center account. IAM password login needs a brand context; pass a user-facing brand name or code with `--brand`, such as `森马` or `C326`, or reuse a profile that already has that brand saved. Do not guess the type for a user; ask them which system their username/password belongs to, or use CDP/browser login when they already have a valid web session.
 
 `agent.explain-error` is a deterministic local helper. It does not call an LLM; it maps known Bmall error codes and messages to bundled diagnosis/remediation playbooks and returns the knowledge pack version with the answer.
 

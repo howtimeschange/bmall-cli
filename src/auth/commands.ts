@@ -1,10 +1,12 @@
 import { Command } from 'commander';
+import { createInterface } from 'node:readline/promises';
 import { ConfigManager } from '../core/config.js';
 import { BmallHttpClient } from '../core/http.js';
 import { printResult, success } from '../core/output.js';
 import { SessionStore } from './session.js';
 import { readTokenImport } from './token.js';
-import { createBrowserLoginInfo, loginWithPassword, openBrowser, runBrowserLoginReceiver } from './login.js';
+import { createBrowserLoginInfo, loginWithPassword, openBrowser, parseAccountLoginType, runBrowserLoginReceiver } from './login.js';
+import { readTokenBundleFromCdp } from './cdp-login.js';
 import { BmallCliError } from '../core/errors.js';
 import { TokenBundleSchema, type TokenBundle } from './token-bundle.js';
 
@@ -88,8 +90,16 @@ export function registerAuthCommands(program: Command, getGlobals: () => GlobalO
     .description('Login with browser-assisted loopback flow or account/password')
     .option('--browser', 'start browser-assisted login')
     .option('--no-open', 'do not open system browser')
+    .option('--cdp', 'read token bundle from an attached Chrome CDP browser')
+    .option('--cdp-host <host>', 'Chrome CDP host', '127.0.0.1')
+    .option('--cdp-port <port>', 'Chrome CDP port', '9222')
+    .option('--cdp-launch', 'launch Chrome with CDP enabled before reading token')
+    .option('--cdp-user-data-dir <path>', 'Chrome user data dir to use when launching CDP Chrome')
+    .option('--chrome-path <path>', 'Chrome executable path for --cdp-launch')
     .option('--account <account>', 'account/mobile for password login')
     .option('--password <password>', 'password for password login')
+    .option('--account-type <type>', 'password login account system: bmall for original ordering-mall account, iam for IAM user-center account')
+    .option('--brand <nameOrCode>', 'brand name or brand code for IAM password login, for example 森马 or C326')
     .option('--skip-verify', 'save without calling whoami')
     .action(async (opts) => {
       const globals = getGlobals();
@@ -98,7 +108,19 @@ export function registerAuthCommands(program: Command, getGlobals: () => GlobalO
       const store = new SessionStore(undefined, globals.configHome);
       let bundle: TokenBundle;
       let loginInfo: unknown;
-      if (opts.browser) {
+      if (opts.cdp) {
+        const cdp = await readTokenBundleFromCdp({
+          host: opts.cdpHost,
+          port: Number(opts.cdpPort),
+          loginUrl: resolved.loginUrl,
+          launch: Boolean(opts.cdpLaunch),
+          userDataDir: opts.cdpUserDataDir,
+          chromePath: opts.chromePath,
+          configHome: globals.configHome
+        });
+        loginInfo = { cdp: true, pageUrl: cdp.pageUrl, launched: cdp.launched };
+        bundle = cdp.bundle;
+      } else if (opts.browser) {
         const port = 49152 + Math.floor(Math.random() * 10000);
         const info = createBrowserLoginInfo(resolved.loginUrl, port);
         loginInfo = {
@@ -112,13 +134,18 @@ export function registerAuthCommands(program: Command, getGlobals: () => GlobalO
         bundle = await runBrowserLoginReceiver(info);
       } else {
         if (!opts.account || !opts.password) {
-          throw new BmallCliError('INPUT_ERROR', 'Use --browser or provide --account and --password.');
+          throw new BmallCliError('INPUT_ERROR', 'Use --browser, --cdp, or provide --account and --password.');
         }
-        bundle = await loginWithPassword(resolved.baseUrl, opts.account, opts.password);
+        const accountType = parseAccountLoginType(opts.accountType);
+        const saved = await store.get(resolved.profile);
+        const groupId = accountType === 'iam'
+          ? await resolveIamLoginGroupId({ brand: opts.brand, saved, profileGroupId: resolved.profileConfig.groupId, json: globals.json })
+          : undefined;
+        bundle = await loginWithPassword(resolved.baseUrl, opts.account, opts.password, accountType, { groupId });
       }
       if (!opts.skipVerify) await whoami(resolved.baseUrl, bundle);
       await store.save(resolved.profile, bundle);
-      printResult(success(resolved, { profile: resolved.profile, env: resolved.env, saved: true, bundle: publicBundle(bundle) }), globals.json);
+      printResult(success(resolved, { profile: resolved.profile, env: resolved.env, saved: true, loginInfo, bundle: publicBundle(bundle) }), globals.json);
     });
 
   auth
@@ -160,6 +187,59 @@ export function registerAuthCommands(program: Command, getGlobals: () => GlobalO
       await new SessionStore(undefined, globals.configHome).logout(resolved.profile);
       printResult(success(resolved, { loggedOut: true, profile: resolved.profile }), globals.json);
     });
+}
+
+async function resolveIamLoginGroupId(input: { brand?: string; saved?: TokenBundle; profileGroupId?: string; json?: boolean }): Promise<string | undefined> {
+  const brand = input.brand?.trim();
+  const candidates = knownBrandCandidates(input.saved, input.profileGroupId);
+  if (!brand) {
+    if (!input.json && process.stdin.isTTY && process.stdout.isTTY && candidates.length > 0) {
+      return promptForBrand(candidates);
+    }
+    return input.saved?.groupId ?? input.profileGroupId;
+  }
+  const saved = input.saved;
+  const matched = candidates.find((candidate) => [candidate.groupName, candidate.groupCode, candidate.groupId].some((value) => String(value ?? '').toLowerCase() === brand.toLowerCase()));
+  if (matched) return matched.groupId;
+  if (saved?.groupId && [saved.groupName, saved.groupCode, saved.groupId].some((value) => String(value ?? '').toLowerCase() === brand.toLowerCase())) {
+    return saved.groupId;
+  }
+  if (/^[0-9a-f-]{24,}$/i.test(brand)) return brand;
+  throw new BmallCliError('INPUT_ERROR', `未找到品牌“${brand}”对应的已保存上下文。请先用浏览器/CDP或原订货商城账号登录一次该品牌，或传入当前 profile 已知的品牌名称/编码。`, {
+    recover: '例如当前 profile 已保存森马/C326 时，可使用 --brand 森马 或 --brand C326。'
+  });
+}
+
+interface BrandCandidate {
+  groupId: string;
+  groupName?: string;
+  groupCode?: string;
+}
+
+function knownBrandCandidates(saved?: TokenBundle, profileGroupId?: string): BrandCandidate[] {
+  const candidates: BrandCandidate[] = [];
+  if (saved?.groupId) candidates.push({ groupId: saved.groupId, groupName: saved.groupName, groupCode: saved.groupCode });
+  if (profileGroupId && !candidates.some((candidate) => candidate.groupId === profileGroupId)) candidates.push({ groupId: profileGroupId });
+  return candidates;
+}
+
+async function promptForBrand(candidates: BrandCandidate[]): Promise<string> {
+  const lines = candidates.map((candidate, index) => {
+    const name = candidate.groupName ?? '已保存品牌';
+    const code = candidate.groupCode ? ` / ${candidate.groupCode}` : '';
+    return `${index + 1}. ${name}${code}`;
+  });
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const answer = (await rl.question(`请选择 IAM 登录品牌：\n${lines.join('\n')}\n输入序号、品牌名称或品牌编码：`)).trim();
+    const selected = candidates[Number(answer) - 1] ?? candidates.find((candidate) => [candidate.groupName, candidate.groupCode].some((value) => String(value ?? '').toLowerCase() === answer.toLowerCase()));
+    if (!selected) {
+      throw new BmallCliError('INPUT_ERROR', `未找到选择的品牌“${answer}”。请重新执行并输入列表中的序号、品牌名称或品牌编码。`);
+    }
+    return selected.groupId;
+  } finally {
+    rl.close();
+  }
 }
 
 export function registerWhoamiCommand(program: Command, getGlobals: () => GlobalOptions): void {
