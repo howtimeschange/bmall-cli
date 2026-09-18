@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Command } from 'commander';
+import { SessionStore } from '../../src/auth/session.js';
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -17,6 +18,7 @@ describe('new store adapter', () => {
   });
 
   it('executes confirm-plan sequence and dry-runs submit sequence', async () => {
+    vi.spyOn(SessionStore.prototype, 'require').mockResolvedValue({ tokenId: 'unit-test-token', permissions: [], menuData: [] });
     const calls: BmallRequestOptions[] = [];
     const outputs: unknown[] = [];
     const program = new Command().exitOverride();

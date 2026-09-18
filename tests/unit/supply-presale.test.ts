@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Command } from 'commander';
+import { SessionStore } from '../../src/auth/session.js';
 import { SupplyPresaleAdapter } from '../../src/domains/order/adapters/supply-presale.js';
 import { registerSupplyPresaleCommands } from '../../src/domains/supply-presale/commands.js';
 import type { BmallRequestOptions } from '../../src/core/http.js';
@@ -15,6 +16,7 @@ describe('supply presale adapter', () => {
   });
 
   it('uses API calls for read paths and gates write paths', async () => {
+    vi.spyOn(SessionStore.prototype, 'require').mockResolvedValue({ tokenId: 'unit-test-token', permissions: [], menuData: [] });
     const calls: BmallRequestOptions[] = [];
     const outputs: unknown[] = [];
     const program = new Command().exitOverride();

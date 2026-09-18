@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Command } from 'commander';
+import { SessionStore } from '../../src/auth/session.js';
 import { PickupAdapter } from '../../src/domains/order/adapters/pickup.js';
 import { registerPickupCommands } from '../../src/domains/pickup/commands.js';
 import type { BmallRequestOptions } from '../../src/core/http.js';
@@ -17,6 +18,7 @@ describe('pickup adapter', () => {
   });
 
   it('calls API for list and blocks destructive refuse without confirm', async () => {
+    vi.spyOn(SessionStore.prototype, 'require').mockResolvedValue({ tokenId: 'unit-test-token', permissions: [], menuData: [] });
     const calls: BmallRequestOptions[] = [];
     const program = new Command().exitOverride();
     const client = { send: vi.fn(async (opts: BmallRequestOptions) => {
