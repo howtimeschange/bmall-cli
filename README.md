@@ -1,8 +1,20 @@
 # Bmall CLI
 
+**[访问抓虾 Harness 官网 · 查看介绍与下载](https://harness.crawshrimp.com/)**
+
 Bmall CLI 是 Semir Reabam/Bmall 订货商城的 API-first 命令行客户端。
 
 它把网页端常见的下单、切换品牌/门店、订单排查、商品运维、导出任务、诊断知识和受控 job 操作整理成稳定的 CLI 能力，方便人直接使用，也方便 AI Agent 以结构化 JSON 调用。
+
+## 合作交流与赞助
+
+欢迎联系作者，交流订货商城、智能补货与订单运维的 CLI / AI Agent 接入，探讨业务流程集成和项目合作，或赞助支持工具维护。
+
+使用微信扫描下方二维码添加作者，备注「Bmall CLI + 合作 / 交流 / 赞助」。
+
+<a href="https://crawshrimp.com/wechat-qr.jpg">
+  <img src="https://crawshrimp.com/wechat-qr.jpg" alt="Bmall CLI作者的微信联系二维码，用于合作交流与赞助联系" width="280" />
+</a>
 
 ## 一句话了解
 
