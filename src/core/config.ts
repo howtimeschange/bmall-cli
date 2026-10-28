@@ -23,8 +23,8 @@ const ProfileSchema = z.object({
 
 const CliConfigSchema = z.object({
   activeProfile: z.string().default('default'),
-  profiles: z.record(ProfileSchema).default({}),
-  envs: z.record(z.object({ baseUrl: z.string().url(), loginUrl: z.string().url().optional() })).default({})
+  profiles: z.record(z.string(), ProfileSchema).default({}),
+  envs: z.record(z.string(), z.object({ baseUrl: z.string().url(), loginUrl: z.string().url().optional() })).default({})
 });
 
 export type ProfileConfig = z.infer<typeof ProfileSchema>;
